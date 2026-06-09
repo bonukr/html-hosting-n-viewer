@@ -1,0 +1,2918 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8" />
+<title>집계 보고서 — Lo-fi 프로토타입 (v5.0 / 260519)</title>
+<script src="https://unpkg.com/react@18.3.1/umd/react.development.js" integrity="sha384-hD6/rw4ppMLGNu3tX5cjIb+uRZ7UkRJ6BPkLpg4hAu/6onKUg4lLsHAs9EBPT82L" crossorigin="anonymous"></script>
+<script src="https://unpkg.com/react-dom@18.3.1/umd/react-dom.development.js" integrity="sha384-u6aeetuaXnQ38mYT8rp6sbXaQe3NL9t+IBXmnYxwkUI2Hw4bsp2Wvmx4yRQF1uAm" crossorigin="anonymous"></script>
+<script src="https://unpkg.com/@babel/standalone@7.29.0/babel.min.js" integrity="sha384-m08KidiNqLdpJqLq95G/LEi8Qvjl/xUYll3QILypMoQ65QorJ9Lvtp2RXYGBFj1y" crossorigin="anonymous"></script>
+<style>
+  :root {
+    --ink: #1a1a1a; --ink-2: #4a4a4a; --ink-3: #8a8a8a;
+    --line: #cfcfcf; --line-2: #e6e6e6;
+    --paper: #fafaf7; --paper-2: #f1efe9;
+    --hi: #ffe79a;
+    --host: #378ADD; --vm: #1D9E75;
+    --warn: #854f0b; --warn-bg: #faeeda;
+  }
+  * { box-sizing: border-box; }
+  html, body { margin: 0; padding: 0; background: #e9e7e1; color: var(--ink); font-family: ui-monospace, "SF Mono", Menlo, Consolas, monospace; font-size: 13px; line-height: 1.45; }
+  button { font-family: inherit; font-size: inherit; color: inherit; }
+
+  .wf-box { border: 1.5px solid var(--ink); background: #fff; }
+  .wf-stripe { background-image: repeating-linear-gradient(135deg, transparent 0 8px, rgba(0,0,0,0.05) 8px 9px); }
+  .wf-cap { background: var(--paper-2); border-bottom: 1.5px solid var(--ink); padding: 8px 14px; font-weight: 600; display:flex; align-items:center; justify-content:space-between; gap:8px; }
+  .wf-cap .sub { color: var(--ink-3); font-weight: 400; font-size: 11px; }
+
+  .wf-tag { display:inline-flex; align-items:center; gap:4px; padding: 2px 7px; border: 1px solid var(--ink); border-radius: 999px; background: #fff; font-size: 11px; cursor: pointer; user-select:none; }
+  .wf-tag.on { background: var(--ink); color: #fff; }
+  .wf-chip { display:inline-flex; align-items:center; gap:6px; padding: 3px 8px; border: 1px solid var(--ink); background: var(--hi); font-size:11px; }
+  .wf-chip .x { cursor: pointer; opacity: .7; }
+
+  .wf-btn { border: 1.5px solid var(--ink); background: #fff; padding: 5px 11px; cursor: pointer; font-weight: 500; font-size:12px; }
+  .wf-btn:hover { background: var(--paper-2); }
+  .wf-btn.primary { background: var(--ink); color: #fff; }
+  .wf-btn.sm { padding: 3px 8px; font-size: 11px; }
+
+  .wf-seg { display:inline-flex; border: 1.5px solid var(--ink); background:#fff; }
+  .wf-seg button { border:0; background: transparent; padding: 5px 10px; cursor: pointer; border-right: 1px solid var(--line); }
+  .wf-seg button:last-child { border-right: 0; }
+  .wf-seg button.on { background: var(--ink); color: #fff; }
+
+  .wf-check { width: 13px; height: 13px; border: 1.5px solid var(--ink); display:inline-flex; align-items:center; justify-content:center; background:#fff; flex:none; cursor:pointer; }
+  .wf-check.on { background: var(--ink); color: #fff; font-size: 10px; }
+  .wf-check.partial { background: var(--ink-3); color: #fff; font-size: 10px; }
+
+  .wf-select {
+    appearance: none; -webkit-appearance: none;
+    border: 1.5px solid var(--ink); background: #fff;
+    padding: 5px 26px 5px 10px; font: inherit;
+    background-image: linear-gradient(45deg, transparent 50%, var(--ink) 50%), linear-gradient(135deg, var(--ink) 50%, transparent 50%);
+    background-position: calc(100% - 13px) 50%, calc(100% - 8px) 50%;
+    background-size: 5px 5px, 5px 5px;
+    background-repeat: no-repeat;
+    cursor: pointer;
+  }
+
+  .canvas { width: 1440px; margin: 24px auto; border: 2px solid var(--ink); background: #fff; }
+  .topbar { display:flex; align-items:center; justify-content:space-between; padding: 9px 16px; border-bottom: 2px solid var(--ink); background: var(--paper-2); }
+  .topbar .crumb { color: var(--ink-3); font-size: 12px; }
+  .topbar .crumb b { color: var(--ink); }
+  .topbar .meta { display:flex; gap:14px; align-items:center; font-size: 11px; color: var(--ink-3); }
+
+  /* main column (no sidebar) */
+  .body { padding: 14px 16px 28px; display:flex; flex-direction:column; gap:14px; background: var(--paper); min-height: 900px; }
+
+  /* category tabs (top) */
+  .cat-row { display:flex; gap:0; border: 1.5px solid var(--ink); background:#fff; }
+  .cat-tab { padding: 10px 16px; cursor: pointer; display:flex; align-items:center; gap:10px; border-right: 1px solid var(--line-2); font-size: 13px; }
+  .cat-tab:last-child { border-right: 0; }
+  .cat-tab .dot { width:10px; height:10px; border:1.5px solid var(--ink); flex:none; }
+  .cat-tab.host .dot { background: var(--host); }
+  .cat-tab.vm .dot   { background: var(--vm); }
+  .cat-tab.on { background: var(--ink); color: #fff; font-weight: 600; }
+  .cat-tab.on .dot { border-color: #fff; }
+  .cat-tab .sub { color: var(--ink-3); font-size: 11px; margin-left: 6px; }
+  .cat-tab.on .sub { color: rgba(255,255,255,.65); }
+
+  /* target panel */
+  .target-pad { padding: 12px 14px; display:flex; flex-direction:column; gap:10px; }
+  .target-row { display:flex; gap:14px; align-items:flex-start; }
+  .target-row > .left { flex: 0 0 320px; display:flex; flex-direction:column; gap:8px; }
+  .target-row > .right { flex: 1; display:flex; flex-direction:column; gap:8px; min-width: 0; }
+  .search-row { display:flex; gap:6px; align-items:center; }
+  .search-row input { flex:1; border: 1.5px solid var(--ink); padding: 5px 10px; font: inherit; background: #fff; }
+  .target-grid { display:flex; flex-wrap:wrap; gap:5px; max-height: 110px; overflow-y:auto; padding: 2px; }
+  .chip-summary { padding-top: 8px; border-top: 1px dashed var(--line); display:flex; flex-wrap:wrap; gap:5px; min-height: 24px; }
+  .project-gate { border: 1.5px dashed var(--ink); background: var(--paper-2); padding: 14px; text-align: center; color: var(--ink-2); font-size: 12px; }
+  .project-gate b { color: var(--ink); display:block; margin-bottom:4px; }
+
+  /* metric tree — horizontal grid */
+  .tree-cap-row { display:flex; align-items:center; gap:8px; }
+  .tree-grid { display:grid; grid-template-columns: repeat(4, 1fr); gap: 10px; padding: 12px 14px; }
+  .tree-col { border: 1px solid var(--line); background: #fff; display:flex; flex-direction:column; }
+  .tree-col-head { padding: 7px 10px; background: var(--paper-2); border-bottom: 1px solid var(--ink); display:flex; align-items:center; gap:7px; cursor: pointer; user-select:none; }
+  .tree-col-head .tree-name { flex: 1; font-weight: 600; font-size: 12.5px; }
+  .tree-badge { font-size: 10px; padding: 1px 6px; border: 1px solid var(--ink); border-radius: 999px; background: #fff; }
+  .tree-leaves { padding: 6px 10px 8px; display:flex; flex-direction:column; gap:5px; }
+  .tree-leaf { display:flex; align-items:center; gap:7px; font-size: 12px; color: var(--ink-2); cursor:pointer; padding: 2px 0; }
+  .tree-leaf:hover { color: var(--ink); }
+
+  /* filter bar */
+  .filter-bar { display:flex; align-items:center; gap:22px; flex-wrap:wrap; padding: 10px 14px; }
+  .filter-bar .lbl { font-size: 11px; color: var(--ink-3); text-transform: uppercase; letter-spacing: .06em; margin-right: 6px; }
+  .filter-bar .field { display:flex; align-items:center; gap: 6px; }
+  .filter-bar .hint { font-size: 11px; color: var(--ink-3); }
+  .date-pick { display:inline-flex; align-items:center; gap:6px; border:1.5px solid var(--ink); padding: 4px 10px; background:#fff; cursor:pointer; }
+
+  /* calendar popover */
+  .cal-backdrop { position: fixed; inset:0; background: rgba(0,0,0,0.18); z-index: 50; }
+  .cal-popover { position: absolute; top: calc(100% + 6px); right: 14px; z-index: 51; background:#fff; border: 1.5px solid var(--ink); box-shadow: 6px 6px 0 rgba(0,0,0,0.08); width: 640px; max-width: calc(100vw - 40px); }
+  .cal-head { display:flex; align-items:center; gap:10px; padding: 10px 14px; border-bottom: 1.5px solid var(--ink); background: var(--paper-2); }
+  .cal-body { padding: 12px 14px; }
+  .cal-toggle-row { display:flex; align-items:center; gap:10px; margin-bottom: 12px; padding-bottom: 10px; border-bottom: 1px dashed var(--ink-4, #d0d0d0); }
+  .cal-pick-lbl { font-size: 11px; color: var(--ink-3); text-transform: uppercase; letter-spacing: .06em; }
+  .cal-hint { font-size: 11px; color: var(--ink-3); margin-left: auto; }
+  .cal-cols { display:grid; grid-template-columns: 1fr 200px; gap: 16px; }
+  .cal-month-head { display:flex; align-items:center; gap:6px; margin-bottom: 8px; }
+  .cal-dow { display:grid; grid-template-columns: repeat(7, 1fr); gap: 2px; font-size: 10px; color: var(--ink-3); text-align:center; margin-bottom: 4px; }
+  .cal-dow .sun { color: #c33; }
+  .cal-dow .sat { color: #36c; }
+  .cal-grid { display:grid; grid-template-columns: repeat(7, 1fr); gap: 2px; }
+  .cal-cell { display:flex; align-items:center; justify-content:center; height: 32px; font-size: 12px; cursor: pointer; border: 1px solid transparent; user-select: none; }
+  .cal-cell:hover { background: var(--paper-2); }
+  .cal-cell.empty { cursor: default; }
+  .cal-cell.empty:hover { background: transparent; }
+  .cal-cell.in { background: #e8f0ff; }
+  .cal-cell.edge { background: var(--ink); color: #fff; font-weight: 600; }
+  .cal-cell.disabled { color: #c8c8c8; cursor: not-allowed; background: transparent; }
+  .cal-cell.disabled:hover { background: transparent; }
+  .cal-mgrid { display:grid; grid-template-columns: repeat(3, 1fr); gap: 6px; }
+  .cal-mcell { display:flex; flex-direction:column; align-items:center; justify-content:center; gap:2px; height: 56px; font-size: 16px; font-weight:600; cursor:pointer; border: 1.5px solid var(--ink); background:#fff; }
+  .cal-mcell:hover { background: var(--paper-2); }
+  .cal-mcell.in { background: #e8f0ff; }
+  .cal-mcell.edge { background: var(--ink); color: #fff; }
+  .cal-mcell.disabled { color: #c8c8c8; border-color: #e2e2e2; cursor: not-allowed; background: transparent; }
+  .cal-mcell.disabled:hover { background: transparent; }
+  .cal-mlbl { font-size: 10px; font-weight: 400; opacity: .7; }
+  .cal-side { display:flex; flex-direction:column; gap: 10px; padding-left: 14px; border-left: 1px dashed #d0d0d0; }
+  .cal-side-row { display:flex; align-items:center; gap: 6px; flex-wrap: wrap; }
+  .cal-side-lbl { font-size: 10px; color: var(--ink-3); text-transform: uppercase; letter-spacing: .06em; width: 30px; }
+  .cal-side-val { font-size: 12px; font-weight: 600; }
+  .cal-side-val.big { font-size: 14px; }
+  .cal-preset-list { display:flex; flex-direction:column; gap: 4px; margin-top: 8px; padding-top: 10px; border-top: 1px dashed #d0d0d0; }
+  .cal-foot { display:flex; align-items:center; gap: 10px; padding: 10px 14px; border-top: 1.5px solid var(--ink); background: var(--paper-2); }
+  .cal-validity { font-size: 11px; flex: 1; }
+  .cal-validity.ok { color: #2a7; }
+  .cal-validity.bad { color: #c33; }
+
+  .wf-box { position: relative; }
+
+  /* table */
+  .table-wrap { background: #fff; }
+  .table-scroll { overflow-x: auto; max-width: 100%; }
+  .data-table { width:100%; border-collapse: collapse; font-size: 12px; min-width: 900px; }
+  .data-table th, .data-table td { border-bottom: 1px solid var(--line-2); padding: 7px 10px; text-align: left; vertical-align: middle; white-space: nowrap; }
+  .data-table thead.lvl0 th { background: var(--paper-2); font-size: 11px; font-weight: 700; letter-spacing: .04em; border-bottom: 1px solid var(--ink); padding: 6px 10px; }
+  .data-table thead.lvl1 th { background: var(--paper-2); font-size: 11px; text-transform: uppercase; letter-spacing: .06em; border-bottom: 1.5px solid var(--ink); }
+  .data-table thead.lvl2 th { background: #fff; font-size: 10.5px; color: var(--ink-3); font-weight: 500; border-bottom: 1px solid var(--ink); }
+  .data-table thead th.lvl0 { background: var(--paper-2); font-size: 11px; font-weight: 700; letter-spacing: .04em; border-bottom: 1px solid var(--ink); padding: 6px 10px; }
+  .data-table thead th.lvl1 { background: var(--paper-2); font-size: 11px; text-transform: uppercase; letter-spacing: .06em; border-bottom: 1.5px solid var(--ink); }
+  .data-table thead th.lvl2 { background: #fff; font-size: 10.5px; color: var(--ink-3); font-weight: 500; border-bottom: 1px solid var(--ink); }
+  .data-table tbody tr:hover { background: var(--paper-2); }
+  .num { font-variant-numeric: tabular-nums; }
+  .num.min { color: var(--ink-3); }
+  .num.max { color: var(--ink); font-weight: 600; }
+  .num.avg { color: var(--ink-2); }
+
+  .csv-bar { padding: 10px 14px; border-top: 1.5px solid var(--ink); background: var(--paper-2); display:flex; align-items:center; justify-content:space-between; gap: 14px; }
+  .csv-bar .hint { font-size: 11.5px; color: var(--ink-3); }
+  .csv-bar .hint b { color: var(--ink); }
+
+  /* charts */
+  .chart-rows { display:flex; flex-direction:column; gap: 12px; }
+  .chart-grid { display:grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+  .chart-grid.pair-row { gap: 8px; }
+  .chart-grid.pair-row .chart-card { border-color: var(--ink); }
+  .chart-grid.pair-row .chart-card + .chart-card { border-left-width: 0.5px; }
+  .chart-card { background: #fff; border: 1.5px solid var(--ink); display:flex; flex-direction:column; }
+  .chart-head { padding: 9px 12px; border-bottom: 1px solid var(--ink); display:flex; align-items:center; gap:10px; flex-wrap:wrap; }
+  .chart-title { font-weight: 600; display:flex; align-items:center; gap:6px; flex:1; min-width: 140px; }
+  /* v5.0 (260519) 수정 — 지표 산정 근거 아이콘: i → ? (일괄 변경) */
+  .info-i { display:inline-flex; width:14px; height:14px; border:1px solid var(--ink-3); border-radius:999px; font-size:10.5px; align-items:center; justify-content:center; color: var(--ink-3); cursor:pointer; font-weight: 700; font-family: inherit; line-height: 1; }
+  .info-i:hover { background: var(--ink); color: #fff; border-color: var(--ink); }
+  .agg-toggles { display:inline-flex; gap:6px; align-items:center; font-size: 11px; }
+  .agg-toggles label { display:inline-flex; align-items:center; gap: 4px; cursor: pointer; padding: 2px 6px; border: 1px solid var(--ink); background:#fff; }
+  .agg-toggles label.on { background: var(--ink); color: #fff; }
+  .chart-body { padding: 10px 12px 6px; }
+  .chart-note { margin: 0 12px 10px; padding: 4px 8px; background: var(--warn-bg); color: var(--warn); border: 1px solid var(--warn); font-size: 10.5px; }
+  .chart-legend { padding: 4px 12px 10px; display:flex; gap:10px; flex-wrap:wrap; font-size: 11px; color: var(--ink-2); }
+  .lgnd-sw { width: 14px; height: 2px; display:inline-block; vertical-align: middle; margin-right: 4px; }
+
+  .yaxis text, .xaxis text { fill: var(--ink-3); font-size: 9.5px; font-family: inherit; }
+  .axis-line { stroke: var(--ink); stroke-width: 1; }
+  .grid-line { stroke: var(--line-2); stroke-width: 1; stroke-dasharray: 2 3; }
+
+  .info-overlay { position: fixed; inset: 0; background: rgba(0,0,0,.35); display:flex; align-items:center; justify-content:center; z-index: 90; }
+  .info-popup { width: min(560px, 92vw); background: #fff; border: 2px solid var(--ink); padding: 16px 18px; }
+  .info-popup h4 { margin: 0 0 10px; font-size: 14px; }
+  .info-popup dl { display:grid; grid-template-columns: 90px 1fr; gap: 4px 12px; font-size: 12px; }
+  .info-popup dt { color: var(--ink-3); }
+  .info-popup dd { margin: 0; }
+
+  .legend-key { margin: 0 0 0; padding: 10px 14px; border: 1.5px dashed var(--ink-3); background: var(--paper-2); font-size: 11px; color: var(--ink-2); display:flex; gap: 18px; flex-wrap: wrap; }
+  .legend-key b { color: var(--ink); }
+
+  /* === v1.6 (260513 피드백) 추가 스타일 === */
+  /* 아코디언 헤더 */
+  .acc-cap { cursor: pointer; user-select: none; }
+  .acc-cap:hover { background: #ece9df; }
+  .acc-arrow { display:inline-block; width:14px; font-size:10px; color: var(--ink-2); }
+  .acc-body { padding: 0; }
+  .acc-collapsed-hint { padding: 8px 14px; font-size: 11px; color: var(--ink-3); border-top: 1px dashed var(--line); background: #fbfaf6; }
+
+  /* 대상 선택 드롭다운 (체크박스) */
+  .target-dd-wrap { position: relative; }
+  .target-dd-btn { display:flex; align-items:center; justify-content:space-between; gap:8px; padding: 6px 12px; border: 1.5px solid var(--ink); background: #fff; cursor: pointer; min-width: 260px; font: inherit; }
+  .target-dd-btn .ph { color: var(--ink-3); }
+  .target-dd-menu { position: absolute; top: calc(100% + 4px); left: 0; z-index: 30; width: 360px; background: #fff; border: 1.5px solid var(--ink); box-shadow: 4px 4px 0 rgba(0,0,0,0.08); }
+  .target-dd-search { padding: 8px 10px; border-bottom: 1px solid var(--line); display:flex; gap:6px; align-items:center; }
+  .target-dd-search input { flex:1; border: 1.5px solid var(--ink); padding: 4px 8px; font: inherit; background: #fff; }
+  .target-dd-list { max-height: 220px; overflow-y: auto; padding: 4px 0; }
+  .target-dd-item { display:flex; align-items:center; gap:8px; padding: 5px 12px; cursor: pointer; font-size: 12px; }
+  .target-dd-item:hover { background: var(--paper-2); }
+  .target-dd-item .grp { color: var(--ink-3); font-size: 10.5px; margin-left: auto; }
+  .target-dd-foot { padding: 6px 10px; border-top: 1px solid var(--line); background: var(--paper-2); display:flex; gap:6px; align-items:center; justify-content: space-between; font-size: 11px; color: var(--ink-3); }
+
+  /* 선택 완료 항목 리스트 (세로 스크롤) */
+  .sel-list-box { border: 1px solid var(--line); background: #fff; }
+  .sel-list-head { padding: 6px 10px; font-size: 11px; color: var(--ink-3); background: var(--paper-2); border-bottom: 1px solid var(--line); display:flex; justify-content: space-between; align-items: center; gap:8px; }
+  .sel-list-head .lbl { text-transform: uppercase; letter-spacing: .06em; }
+  .sel-list-head .cnt { color: var(--ink); font-weight: 600; }
+  .sel-list-head .cnt.warn { color: var(--warn); }
+  .sel-list-tools { display:flex; align-items:center; gap:6px; padding: 6px 10px; border-bottom: 1px dotted var(--line); background: #fbfaf6; }
+  .sel-list-tools input { flex:1; border: 1.5px solid var(--ink); padding: 3px 8px; font: inherit; font-size: 11.5px; background: #fff; }
+  .sel-list-tools .seg-mini { display:inline-flex; border: 1px solid var(--ink); background: #fff; }
+  .sel-list-tools .seg-mini button { border:0; background: transparent; padding: 3px 7px; cursor: pointer; font-size: 11px; font-family: inherit; border-right: 1px solid var(--line); }
+  .sel-list-tools .seg-mini button:last-child { border-right: 0; }
+  .sel-list-tools .seg-mini button.on { background: var(--ink); color: #fff; }
+  .sel-list-body { max-height: 280px; overflow-y: auto; padding: 4px 0; }
+  .sel-list-body.grouped { padding: 0; }
+  .sel-list-group { border-bottom: 1px dashed var(--line); }
+  .sel-list-group:last-child { border-bottom: 0; }
+  .sel-list-group-head { display:flex; align-items:center; gap:6px; padding: 4px 10px; background: #fbfaf6; cursor: pointer; user-select: none; font-size: 11px; color: var(--ink-2); position: sticky; top: 0; z-index: 1; }
+  .sel-list-group-head:hover { background: var(--paper-2); }
+  .sel-list-group-head .arr { width: 12px; font-size: 9px; color: var(--ink-3); }
+  .sel-list-group-head .name { flex:1; }
+  .sel-list-group-head .gcnt { color: var(--ink); font-weight: 600; }
+  .sel-list-group-head .gclear { font-size: 10px; padding: 1px 6px; border: 1px solid var(--ink-3); background: #fff; cursor: pointer; color: var(--ink-2); }
+  .sel-list-group-head .gclear:hover { background: var(--ink); color: #fff; border-color: var(--ink); }
+  .sel-list-row { display:flex; align-items:center; gap:8px; padding: 4px 10px 4px 26px; font-size: 12px; }
+  .sel-list-row + .sel-list-row { border-top: 1px dotted var(--line-2); }
+  .sel-list-row .name { flex:1; }
+  .sel-list-row .grp { color: var(--ink-3); font-size: 10.5px; }
+  .sel-list-row .x { cursor: pointer; opacity:.6; padding: 0 4px; }
+  .sel-list-row .x:hover { opacity: 1; }
+  .sel-list-empty { padding: 12px; text-align:center; color: var(--ink-3); font-size: 11px; }
+  .sel-list-foot { padding: 5px 10px; border-top: 1px dashed var(--line); font-size: 10.5px; color: var(--ink-3); display:flex; justify-content:space-between; gap:8px; background: #fbfaf6; }
+  .sel-list-foot .bar { flex:1; height: 4px; background: var(--line-2); position: relative; align-self: center; max-width: 160px; }
+  .sel-list-foot .bar > span { display:block; height:100%; background: var(--ink); }
+  .sel-list-foot .bar > span.warn { background: var(--warn); }
+
+  /* 드롭다운 마스터 체크박스 행 */
+  .target-dd-master { display:flex; align-items:center; gap:8px; padding: 6px 12px; border-bottom: 1px solid var(--ink); background: var(--paper-2); font-size: 12px; cursor: pointer; user-select: none; font-weight: 600; }
+  .target-dd-master:hover { background: #ece9df; }
+  .target-dd-master .cnt-tag { margin-left: auto; font-size: 10.5px; padding: 1px 7px; border: 1px solid var(--ink); border-radius: 999px; background: #fff; font-weight: 500; color: var(--ink-2); }
+
+  /* 조회/저장 액션 바 */
+  .run-bar { display:flex; align-items:center; justify-content: space-between; gap:10px; padding: 10px 14px; border-top: 1.5px solid var(--ink); background: var(--paper-2); }
+  .run-bar .left { display:flex; gap:8px; align-items:center; font-size: 11px; color: var(--ink-3); }
+  .run-bar .right { display:flex; gap:6px; align-items:center; }
+  .run-bar .saved-tag { display:inline-flex; align-items:center; gap:4px; font-size: 11px; padding: 2px 7px; border: 1px dashed var(--ink-3); border-radius: 999px; color: var(--ink-2); background: #fff; }
+
+  /* 데이터 테이블 세로 스크롤 */
+  .table-scroll.vscroll { max-height: 460px; overflow-y: auto; }
+  /* sticky header: <th> 곳곳의 lvl0/lvl1/lvl2 클래스로 top 적용. 단일 thead로 합쳐서 rowSpan이 3행을 실제로 걸치도록 함. */
+  .data-table thead th { position: sticky; background: var(--paper-2); z-index: 2; }
+  .data-table thead th.lvl0 { top: 0; }
+  .data-table thead th.lvl1 { top: 32px; }
+  .data-table thead th.lvl2 { top: 60px; }
+  .data-table thead th.hdr-frozen { z-index: 3; }
+
+  /* 차트 확대 (모달) */
+  .chart-actions { display:inline-flex; gap:6px; align-items:center; margin-left: auto; }
+  .zoom-btn { border: 1px solid var(--ink); background: #fff; padding: 2px 8px; cursor: pointer; font-size: 11px; }
+  .zoom-btn:hover { background: var(--paper-2); }
+  .zoom-overlay { position: fixed; inset: 0; background: rgba(0,0,0,.45); display:flex; align-items:center; justify-content:center; z-index: 95; padding: 24px; }
+  .zoom-window { width: min(1280px, 96vw); height: min(820px, 92vh); background: #fff; border: 2px solid var(--ink); display:flex; flex-direction: column; }
+  .zoom-head { padding: 12px 16px; border-bottom: 1.5px solid var(--ink); display:flex; align-items:center; gap:12px; background: var(--paper-2); }
+  .zoom-head .title { font-size: 15px; font-weight: 700; flex:1; }
+  .zoom-body { flex: 1; padding: 16px 18px; display:flex; flex-direction:column; gap: 10px; min-height: 0; }
+  .zoom-svg-wrap { flex: 1; min-height: 0; display:flex; align-items:stretch; }
+  .zoom-foot { padding: 8px 16px; border-top: 1px solid var(--line); display:flex; gap: 14px; font-size: 11px; color: var(--ink-3); flex-wrap: wrap; }
+
+  /* 헤더 정보 배너 (로드맵 / 미터링 / 중위값 메모) */
+  .info-banner { display:flex; gap: 0; border: 1.5px solid var(--ink); background: #fff; font-size: 11.5px; }
+  .info-banner .col { flex:1; padding: 8px 12px; border-right: 1px solid var(--line-2); display:flex; flex-direction:column; gap:2px; }
+  .info-banner .col:last-child { border-right: 0; }
+  .info-banner .col .lbl { font-size: 10px; color: var(--ink-3); text-transform: uppercase; letter-spacing: .06em; }
+  .info-banner .col .val { color: var(--ink); }
+  .info-banner .col .val s { color: var(--ink-3); text-decoration: line-through; }
+  .info-banner .col .val em { font-style: normal; background: var(--hi); padding: 0 3px; }
+
+  /* v4.0 — a-range-picker picker="week" 표준 듀얼 캘린더 + 주차 행 하이라이트 */
+  .week-rp-input { display:flex; align-items:center; gap: 12px; padding: 8px 14px 0; }
+  .week-rp-input .field { flex: 1; display:flex; align-items:center; gap: 8px; padding: 6px 10px; border: 1.5px solid var(--ink); background: #fff; font-size: 13px; }
+  .week-rp-input .field.on { border-bottom: 2px solid #1677ff; }
+  .week-rp-input .field .iso { font-variant-numeric: tabular-nums; }
+  .week-rp-input .arrow { color: var(--ink-3); font-size: 14px; }
+  .week-rp-input .cal-ico { color: var(--ink-3); font-size: 14px; margin-left: auto; }
+  .week-cal-cols { display:grid; grid-template-columns: 24px 1fr 1fr 24px; gap: 8px; padding: 10px 12px; align-items:flex-start; }
+  .week-cal-nav { display:flex; flex-direction:column; gap: 4px; padding-top: 28px; align-items:center; }
+  .week-cal-nav button { border: 0; background: transparent; cursor: pointer; padding: 4px 6px; font-size: 13px; color: var(--ink-2); border-radius: 3px; }
+  .week-cal-nav button:hover { background: var(--paper-2); color: var(--ink); }
+  .week-cal { display: flex; flex-direction: column; }
+  .week-cal-head { text-align: center; font-weight: 600; padding: 4px 0 10px; font-size: 13px; }
+  .week-cal-dow { display:grid; grid-template-columns: repeat(7, 1fr); font-size: 10.5px; color: var(--ink-3); text-align:center; padding: 0; margin-bottom: 2px; }
+  .week-cal-dow .we { color: #c33; }
+  .week-cal-dow .sa { color: #36c; }
+  .week-cal-row { display:grid; grid-template-columns: repeat(7, 1fr); cursor: pointer; transition: background .08s; }
+  .week-cal-row:hover { background: #f0f3f8; }
+  .week-cal-row.hov { background: #e8f0ff; }
+  .week-cal-row.in { background: #e6f0ff; }
+  .week-cal-row.edge { background: #1677ff; color: #fff; font-weight: 600; }
+  .week-cal-row.edge .week-cal-cell.out { color: rgba(255,255,255,.55); }
+  .week-cal-row.dis { opacity: .35; cursor: not-allowed; }
+  .week-cal-row.dis:hover { background: transparent; }
+  .week-cal-cell { padding: 6px 0; text-align: center; font-size: 12px; font-variant-numeric: tabular-nums; }
+  .week-cal-cell.out { color: #c8c8c8; }
+  .week-cal-foot-hint { padding: 0 14px 8px; font-size: 11px; color: var(--ink-3); border-top: 1px dashed var(--line); padding-top: 8px; margin-top: 4px; }
+  .week-cal-foot-hint code { background: var(--paper-2); padding: 0 4px; border: 1px solid var(--line); border-radius: 2px; font-size: 10.5px; }
+
+  /* v4.0 — daily 듀얼 캘린더 (일자 셀 단위 hover/select) */
+  .day-cal-row { display:grid; grid-template-columns: repeat(7, 1fr); }
+  .day-cal-cell { padding: 6px 0; text-align: center; font-size: 12px; font-variant-numeric: tabular-nums; cursor: pointer; transition: background .08s; }
+  .day-cal-cell:hover { background: #f0f3f8; }
+  .day-cal-cell.hov { background: #e8f0ff; }
+  .day-cal-cell.in  { background: #e6f0ff; }
+  .day-cal-cell.edge { background: #1677ff; color: #fff; font-weight: 600; border-radius: 3px; }
+  .day-cal-cell.out { color: #c8c8c8; cursor: default; pointer-events: none; background: transparent; }
+  .day-cal-cell.dis { opacity: .35; cursor: not-allowed; background: transparent; }
+  .day-cal-cell.dis:hover { background: transparent; }
+
+  /* 캘린더 드롭다운 (v1.7 - 연월일/시 dropdown 선택) */
+  .cal-dd { padding: 4px 22px 4px 8px; font-size: 12px; background-size: 4px 4px, 4px 4px; }
+  .cal-side-row .cal-dd { min-width: 0; }
+  .cal-side-row.dd-row { gap: 4px; flex-wrap: wrap; }
+  .cal-side-row.dd-row .cal-side-lbl { width: 30px; flex: 0 0 30px; }
+  .cal-side-row.dd-row select { flex: 1 1 auto; min-width: 60px; }
+  .cal-side .pick-mode-hint { font-size: 10.5px; color: var(--ink-3); padding: 4px 0 0; border-top: 1px dashed #d0d0d0; margin-top: 4px; }
+
+  /* v4.0 (260515) — 집계 기준 설명 패널 */
+  .aggr-explain { display:flex; gap: 16px; padding: 12px 14px; background: #fffbe9; border-top: 1.5px solid var(--ink); align-items: stretch; }
+  .aggr-explain-text { flex: 1; min-width: 0; font-size: 12px; line-height: 1.65; color: var(--ink-2); }
+  .aggr-explain-text .title { font-weight: 700; color: var(--ink); display:flex; align-items:center; gap:6px; margin-bottom: 6px; }
+  .aggr-explain-text .title .badge { font-size: 10px; padding: 1px 6px; border: 1px solid var(--ink); background: #fff; font-weight: 600; }
+  .aggr-explain-text ul { margin: 0; padding-left: 16px; }
+  .aggr-explain-text ul li { margin-bottom: 3px; }
+  .aggr-explain-text ul li b { color: var(--ink); }
+  .aggr-explain-text ul li em { font-style: normal; background: var(--hi); padding: 0 3px; color: var(--ink); }
+  .aggr-explain-diagram { flex: 0 0 360px; background: #fff; border: 1px solid var(--ink); padding: 4px 6px 2px; }
+  .aggr-explain-diagram .cap { font-size: 10px; color: var(--ink-3); text-align: center; padding: 2px 0 0; letter-spacing: .04em; }
+
+  /* v2.0 — 필터 영역 그룹핑 (① 대상 + ② 지표 + ③ 조회 조건 → 공용 [적용] 액션바) */
+  .filter-area { border: 2px solid var(--ink); background: #fff; display:flex; flex-direction:column; box-shadow: 4px 4px 0 rgba(0,0,0,0.06); }
+  .filter-area-head { padding: 10px 14px; background: var(--ink); color: #fff; display:flex; align-items:center; gap:12px; font-size: 13px; font-weight: 600; }
+  .filter-area-head .icon { display:inline-flex; width:18px; height:18px; align-items:center; justify-content:center; border: 1.5px solid #fff; font-size:11px; }
+  .filter-area-head .sub { font-weight: 400; color: rgba(255,255,255,.7); font-size: 11px; }
+  .filter-area-head .badge { margin-left:auto; font-size: 11px; padding: 2px 9px; border: 1px solid #fff; background: transparent; color: #fff; font-weight: 400; display:inline-flex; align-items:center; gap:6px; border-radius: 999px; }
+  .filter-area-head .badge b { color: #fff; font-weight: 700; }
+  .filter-area-stack { display:flex; flex-direction:column; }
+  .filter-area-stack > .wf-box { border-left: 0; border-right: 0; border-top: 1px solid var(--ink); border-bottom: 0; box-shadow: none; }
+  .filter-area-stack > .wf-box:first-child { border-top: 0; }
+  .filter-area-foot { border-top: 2px solid var(--ink); background: var(--paper-2); padding: 12px 14px; display:flex; align-items:center; gap: 14px; }
+  /* sticky 액션바 — 표·차트를 아래로 스크롤해도 필터 적용 상태를 상단에 고정 (조회 조건 재적용 누락 방지) */
+  .filter-area-foot.sticky-foot { position: sticky; top: 0; z-index: 20; border: 2px solid var(--ink); box-shadow: 0 4px 0 rgba(0,0,0,0.08); }
+  .filter-area-foot.sticky-foot.dirty { border-color: #b54708; background: #fff4e6; box-shadow: 0 4px 0 rgba(181,71,8,0.18); }
+  .filter-area-foot .summary { flex:1; display:flex; flex-direction: column; gap: 3px; font-size: 12px; line-height: 1.5; }
+  .filter-area-foot .summary .row1 { color: var(--ink-2); display:flex; gap:14px; flex-wrap:wrap; align-items:center; }
+  .filter-area-foot .summary .row1 b { color: var(--ink); }
+  .filter-area-foot .summary .row1 .pill { display:inline-flex; align-items:center; gap:6px; padding: 2px 8px; border: 1px solid var(--ink); background:#fff; font-size: 11px; }
+  .filter-area-foot .summary .row1 .pill .k { color: var(--ink-3); }
+  .filter-area-foot .summary .row1 .pill .v { font-weight: 600; }
+  .filter-area-foot .summary .row1 .pill.warn { border-color: var(--warn); background: var(--warn-bg); color: var(--warn); }
+  .filter-area-foot .summary .row2 { font-size: 11px; color: var(--ink-3); display:flex; gap: 10px; flex-wrap:wrap; align-items:center; }
+  .filter-area-foot .summary .row2 .saved { color: var(--ink-2); }
+  .filter-area-foot .actions { display:flex; gap:8px; align-items:stretch; }
+  .filter-area-foot .actions .wf-btn { padding: 8px 16px; font-size: 13px; }
+  .filter-area-foot .actions .wf-btn.primary { padding: 8px 22px; }
+  .filter-area-foot .actions .apply-arrow { font-size: 14px; font-weight: 700; margin-right: 4px; }
+
+  /* v2.0 — dirty(편집 중) / clean(적용 완료) 상태 구분 */
+  .filter-area.dirty { border-color: #b54708; box-shadow: 4px 4px 0 rgba(181,71,8,0.12); }
+  .filter-area.dirty .filter-area-head { background: #b54708; }
+  .filter-area.dirty .filter-area-foot { background: #fff4e6; border-top-color: #b54708; }
+  .filter-area-state { display:inline-flex; align-items:center; gap:6px; padding: 2px 9px; font-size: 11px; border: 1px solid #fff; border-radius: 999px; font-weight: 700; }
+  .filter-area-state.clean { background: #15803d; color: #fff; border-color: #15803d; }
+  .filter-area-state.dirty { background: #fff; color: #b54708; border-color: #fff; }
+  .filter-area-state .dot { width: 7px; height: 7px; border-radius: 50%; display:inline-block; }
+  .filter-area-state.clean .dot { background: #fff; }
+  .filter-area-state.dirty .dot { background: #b54708; animation: dirtyPulse 1.6s ease-in-out infinite; }
+  @keyframes dirtyPulse { 0%,100% { opacity: 1; transform: scale(1); } 50% { opacity: .4; transform: scale(1.4); } }
+  .diff-pill { display:inline-flex; align-items:center; gap:4px; font-size: 11px; padding: 2px 8px; border: 1px solid #b54708; background: #fff; color: #b54708; font-weight: 500; }
+  .filter-area-foot .actions .wf-btn.primary.pulse { box-shadow: 0 0 0 0 rgba(181,71,8,0.55); animation: applyPulse 1.4s ease-out infinite; }
+  @keyframes applyPulse { 0% { box-shadow: 0 0 0 0 rgba(181,71,8,0.5); } 70% { box-shadow: 0 0 0 8px rgba(181,71,8,0); } 100% { box-shadow: 0 0 0 0 rgba(181,71,8,0); } }
+
+  /* v2.0 — 데이터 테이블 탭 (일반 / 인스턴스 상태) */
+  .table-tabs { display:flex; align-items:stretch; gap:0; border-bottom: 1.5px solid var(--ink); background: var(--paper-2); padding: 0 14px; }
+  .table-tab { padding: 9px 14px; cursor: pointer; border: 1.5px solid transparent; border-bottom: 0; background: transparent; font: inherit; font-size: 12.5px; color: var(--ink-3); user-select:none; display:inline-flex; align-items:center; gap:6px; position: relative; top: 1.5px; }
+  .table-tab:hover { color: var(--ink-2); }
+  .table-tab.on { background: #fff; border-color: var(--ink); color: var(--ink); font-weight: 600; }
+  .table-tab .cnt { font-size: 10.5px; padding: 1px 6px; border: 1px solid var(--ink); border-radius: 999px; background: #fff; color: var(--ink-2); font-weight: 500; }
+  .table-tab.on .cnt { background: var(--ink); color: #fff; border-color: var(--ink); }
+  .table-tab .new { font-size: 9.5px; padding: 1px 5px; background: var(--hi); border: 1px solid var(--ink); font-weight: 700; letter-spacing:.04em; color: var(--ink); }
+  .table-tab[aria-disabled="true"] { opacity: .35; cursor: not-allowed; }
+  .table-tab-note { margin-left:auto; align-self:center; font-size: 11px; color: var(--ink-3); }
+  .state-warn { margin: 10px 14px; padding: 8px 12px; background: var(--warn-bg); border: 1px solid var(--warn); color: var(--warn); font-size: 11.5px; display:flex; gap:8px; align-items:center; }
+  .state-warn b { color: var(--warn); }
+</style>
+</head>
+<body>
+<div id="root"></div>
+
+<script type="text/babel">
+const { useState, useMemo, useEffect } = React;
+
+/* ============================================================
+   DATA — driven by aggregation_spec_v1.4 (260512 회의 메모 반영)
+   ============================================================ */
+
+const CATEGORIES = [
+  { id: 'host', label: '호스트',       sub: '물리 서버 / 가상화 호스트' },
+  { id: 'vm',   label: '인스턴스 (VM)', sub: '프로젝트 선택 선행 필수' },
+];
+
+/* 네트워크 = 읽기/쓰기 1개 항목으로 통합 / 디스크 「할당량」 제거
+   leaf.ids = 실제 metric ID 배열 (1개=단일 / 2개=읽기·쓰기 페어).
+   표·차트는 underlying ID 단위로 분리 표출.
+   v5.0 (260519) — 모든 지표는 4개 수집 항목을 보유: min · avg · max · median(중위값). */
+const METRIC_TREE = {
+  host: [
+    { id: 'cpu', name: 'CPU', leaves: [
+      { id: 'cpu-core', label: '사용률 / 물리 코어 당', unit: '%', ids: ['cpu-core'] },
+      { id: 'cpu-avg',  label: '사용률 / 전체 평균',    unit: '%', ids: ['cpu-avg'] },
+      { id: 'cpu-cont', label: '경합률',                unit: '%', ids: ['cpu-cont'] },
+    ]},
+    { id: 'mem', name: '메모리', leaves: [
+      { id: 'mem-used',  label: 'Used (Total−Available)', unit: 'byte', ids: ['mem-used'] },
+    ]},
+    { id: 'net', name: '네트워크', leaves: [
+      { id: 'net-bw',   label: '대역폭',             unit: 'bps', ids: ['net-bw'] },
+      { id: 'net-tp',   label: 'Throughput (읽기/쓰기)', unit: 'bps', ids: ['net-tp-r','net-tp-w'] },
+      { id: 'net-pkt',  label: '패킷량 (읽기/쓰기)',     unit: 'pkt', ids: ['net-pkt-r','net-pkt-w'] },
+      { id: 'net-err',  label: '에러율 (읽기/쓰기) ⚠',   unit: '%', warn: true, ids: ['net-err-r','net-err-w'] },
+      { id: 'net-drop', label: '드랍율 (읽기/쓰기) ⚠',   unit: '%', warn: true, ids: ['net-drop-r','net-drop-w'] },
+    ]},
+    { id: 'disk', name: '디스크', leaves: [
+      { id: 'disk-d',    label: '사용량 / sda',             unit: 'byte', ids: ['disk-d'] },
+      { id: 'disk-fs',   label: '사용량 / FS',              unit: 'byte', ids: ['disk-fs'] },
+      { id: 'disk-nas',  label: '사용량 / NAS',             unit: 'byte', ids: ['disk-nas'] },
+      { id: 'disk-rate', label: '사용률',                   unit: '%',    ids: ['disk-rate'] },
+    ]},
+  ],
+  vm: [
+    /* v4.0 (260515) — VM 「인스턴스 상태」(m-life/m-active/m-active-rate) + 「미터링」(m-vol-cnt/m-vol-size/m-vcpu/m-vmem) 그룹 일괄 제거.
+       미터링 데이터는 별도 메뉴(모니터링 > 미터링)로 분리될 예정 — 본 화면은 성능 지표(CPU·메모리·네트워크·디스크)만 다룬다. */
+    { id: 'cpu', name: 'CPU', leaves: [
+      { id: 'vm-cpu-core', label: '사용률 / 물리 코어 당', unit: '%', ids: ['vm-cpu-core'] },
+      { id: 'vm-cpu-avg',  label: '사용률 / 전체 평균',    unit: '%', ids: ['vm-cpu-avg'] },
+      { id: 'vm-cpu-cont', label: '경합률',                unit: '%', ids: ['vm-cpu-cont'] },
+    ]},
+    { id: 'mem', name: '메모리', leaves: [
+      { id: 'vm-mem-used',  label: 'Used',              unit: 'byte', ids: ['vm-mem-used'] },
+      { id: 'vm-mem-free',  label: 'Free',              unit: 'byte', ids: ['vm-mem-free'] },
+      { id: 'vm-mem-cont',  label: '경합률 (검토 중)',   unit: '%',    ids: ['vm-mem-cont'] },
+    ]},
+    { id: 'net', name: '네트워크', leaves: [
+      { id: 'vm-net-bw',   label: '대역폭',                 unit: 'bps', ids: ['vm-net-bw'] },
+      { id: 'vm-net-tp',   label: 'Throughput (읽기/쓰기)', unit: 'bps', ids: ['vm-net-tp-r','vm-net-tp-w'] },
+      { id: 'vm-net-pkt',  label: '패킷량 (읽기/쓰기)',     unit: 'pkt', ids: ['vm-net-pkt-r','vm-net-pkt-w'] },
+      { id: 'vm-net-err',  label: '에러율 (읽기/쓰기) ⚠',   unit: '%', warn: true, ids: ['vm-net-err-r','vm-net-err-w'] },
+      { id: 'vm-net-drop', label: '드랍율 (읽기/쓰기) ⚠',   unit: '%', warn: true, ids: ['vm-net-drop-r','vm-net-drop-w'] },
+    ]},
+    { id: 'disk', name: '디스크', leaves: [
+      { id: 'vm-disk-d',    label: '사용량 / 디스크',          unit: 'byte', ids: ['vm-disk-d'] },
+      { id: 'vm-disk-fs',   label: '사용량 / FS',              unit: 'byte', ids: ['vm-disk-fs'] },
+      { id: 'vm-disk-rate', label: '사용률',                   unit: '%',    ids: ['vm-disk-rate'] },
+      { id: 'vm-disk-iops', label: 'IOPS (읽기/쓰기)',         unit: 'cps',  ids: ['vm-disk-iops-r','vm-disk-iops-w'] },
+      { id: 'vm-disk-tp',   label: 'Throughput (읽기/쓰기)',   unit: 'bps',  ids: ['vm-disk-tp-r','vm-disk-tp-w'] },
+    ]},
+    /* v4.0 (260515) — 「미터링」 그룹 제거 (별도 메뉴로 분리) */
+  ],
+};
+
+/* underlying metric id -> unit (built from METRIC_TREE leaves) */
+const METRIC_UNITS = (() => {
+  const out = {};
+  Object.keys(METRIC_TREE).forEach(cat => {
+    METRIC_TREE[cat].forEach(g => g.leaves.forEach(l => {
+      (l.ids||[]).forEach((id, i) => {
+        // for paired ids, keep the leaf unit; suffix with -r/-w handled by id itself
+        out[id] = l.unit;
+      });
+    }));
+  });
+  return out;
+})();
+
+/* underlying metric id -> parent group name (CPU, 메모리, 네트워크, 디스크, …) */
+const METRIC_GROUP = (() => {
+  const out = {};
+  Object.keys(METRIC_TREE).forEach(cat => {
+    METRIC_TREE[cat].forEach(g => g.leaves.forEach(l => {
+      (l.ids||[]).forEach(id => { out[id] = g.name; });
+    }));
+  });
+  return out;
+})();
+
+/* 실제 metric ID → 표/차트 표시용 레이블 (트리 통합 라벨과 다름) */
+const METRIC_LABELS = {
+  'cpu-core':'사용률 / 코어당', 'cpu-avg':'사용률 / 평균', 'cpu-cont':'경합률',
+  'mem-used':'Mem Used',
+  'net-bw':'대역폭',
+  'net-tp-r':'Throughput (읽기)','net-tp-w':'Throughput (쓰기)',
+  'net-pkt-r':'패킷량 (읽기)','net-pkt-w':'패킷량 (쓰기)',
+  'net-err-r':'에러율 (읽기)','net-err-w':'에러율 (쓰기)',
+  'net-drop-r':'드랍율 (읽기)','net-drop-w':'드랍율 (쓰기)',
+  'disk-d':'디스크 사용량','disk-fs':'FS 사용량','disk-nas':'NAS 사용량','disk-rate':'디스크 사용률',
+  'vm-cpu-core':'사용률 / 코어당','vm-cpu-avg':'사용률 / 평균','vm-cpu-cont':'경합률',
+  'vm-mem-used':'Mem Used','vm-mem-free':'Mem Free','vm-mem-cont':'경합률',
+  'vm-net-bw':'대역폭',
+  'vm-net-tp-r':'Throughput (읽기)','vm-net-tp-w':'Throughput (쓰기)',
+  'vm-net-pkt-r':'패킷량 (읽기)','vm-net-pkt-w':'패킷량 (쓰기)',
+  'vm-net-err-r':'에러율 (읽기)','vm-net-err-w':'에러율 (쓰기)',
+  'vm-net-drop-r':'드랍율 (읽기)','vm-net-drop-w':'드랍율 (쓰기)',
+  'vm-disk-d':'디스크 사용량','vm-disk-fs':'FS 사용량','vm-disk-rate':'디스크 사용률',
+  'vm-disk-iops-r':'IOPS (읽기)','vm-disk-iops-w':'IOPS (쓰기)',
+  'vm-disk-tp-r':'Throughput (읽기)','vm-disk-tp-w':'Throughput (쓰기)',
+  /* v2.0 미터링 지표 */
+  'm-life':'존재 기간 (누적)',
+  'm-active':'활성 시간 (누적)',
+  'm-active-rate':'활성률 (누적)',
+  'm-vol-cnt':'Attached 볼륨 개수',
+  'm-vol-size':'Attached 볼륨 크기',
+  'm-vcpu':'할당 vCPU Core',
+  'm-vmem':'할당 가상 메모리 크기',
+};
+
+const PROJECTS = [
+  { id: 'proj-a', name: 'project-a (서비스 운영)' },
+  { id: 'proj-b', name: 'project-b (배치/캐시)' },
+  { id: 'proj-c', name: 'project-c (테스트)' },
+];
+
+const TARGETS = {
+  host: [
+    { id: 'h1',  name: 'host-prd-01',  group: '그룹 A · 운영' },
+    { id: 'h2',  name: 'host-prd-02',  group: '그룹 A · 운영' },
+    { id: 'h3',  name: 'host-prd-03',  group: '그룹 A · 운영' },
+    { id: 'h4',  name: 'host-prd-04',  group: '그룹 A · 운영' },
+    { id: 'h5',  name: 'host-prd-05',  group: '그룹 A · 운영' },
+    { id: 'h6',  name: 'host-prd-06',  group: '그룹 A · 운영' },
+    { id: 'h7',  name: 'host-stg-01',  group: '그룹 B · 스테이징' },
+    { id: 'h8',  name: 'host-stg-02',  group: '그룹 B · 스테이징' },
+    { id: 'h9',  name: 'host-stg-03',  group: '그룹 B · 스테이징' },
+    { id: 'h10', name: 'host-stg-04',  group: '그룹 B · 스테이징' },
+    { id: 'h11', name: 'host-dev-01',  group: '그룹 C · 개발' },
+    { id: 'h12', name: 'host-dev-02',  group: '그룹 C · 개발' },
+    { id: 'h13', name: 'host-dev-03',  group: '그룹 C · 개발' },
+    { id: 'h14', name: 'host-dev-04',  group: '그룹 C · 개발' },
+    { id: 'h15', name: 'host-mgmt-01', group: '그룹 MGMT' },
+    { id: 'h16', name: 'host-mgmt-02', group: '그룹 MGMT' },
+    { id: 'h17', name: 'host-mgmt-03', group: '그룹 MGMT' },
+    { id: 'h18', name: 'host-edge-01', group: '그룹 EDGE' },
+    { id: 'h19', name: 'host-edge-02', group: '그룹 EDGE' },
+    { id: 'h20', name: 'host-edge-03', group: '그룹 EDGE' },
+    { id: 'h21', name: 'host-gpu-01',  group: '그룹 GPU' },
+    { id: 'h22', name: 'host-gpu-02',  group: '그룹 GPU' },
+    { id: 'h23', name: 'host-gpu-03',  group: '그룹 GPU' },
+    { id: 'h24', name: 'host-gpu-04',  group: '그룹 GPU' },
+  ],
+  vm: {
+    'proj-a': [
+      { id: 'v1', name: 'vm-web-01', group: 'project-a · web' },
+      { id: 'v2', name: 'vm-web-02', group: 'project-a · web' },
+      { id: 'v3', name: 'vm-web-03', group: 'project-a · web' },
+      { id: 'v4', name: 'vm-api-01', group: 'project-a · api' },
+      { id: 'v5', name: 'vm-api-02', group: 'project-a · api' },
+      { id: 'v6', name: 'vm-api-03', group: 'project-a · api' },
+      { id: 'v7', name: 'vm-db-01',  group: 'project-a · db' },
+      { id: 'v8', name: 'vm-db-02',  group: 'project-a · db' },
+      { id: 'v9', name: 'vm-redis-01', group: 'project-a · cache' },
+    ],
+    'proj-b': [
+      { id: 'v10', name: 'vm-batch-01', group: 'project-b · batch' },
+      { id: 'v11', name: 'vm-batch-02', group: 'project-b · batch' },
+      { id: 'v12', name: 'vm-batch-03', group: 'project-b · batch' },
+      { id: 'v13', name: 'vm-cache-01', group: 'project-b · cache' },
+      { id: 'v14', name: 'vm-cache-02', group: 'project-b · cache' },
+      { id: 'v15', name: 'vm-queue-01', group: 'project-b · queue' },
+    ],
+    'proj-c': [
+      { id: 'v16', name: 'vm-test-01', group: 'project-c · test' },
+      { id: 'v17', name: 'vm-test-02', group: 'project-c · test' },
+      { id: 'v18', name: 'vm-test-03', group: 'project-c · test' },
+      { id: 'v19', name: 'vm-qa-01',   group: 'project-c · qa' },
+      { id: 'v20', name: 'vm-qa-02',   group: 'project-c · qa' },
+    ],
+  },
+};
+
+/* STEP = 수집(데이터 하우징) 단위 = 차트 X축 최소 단위
+   - hourly:  X축 1칸 = 1시간, 범위 ≤ 24h, 입력 YYYY.MM.DD HH ~ YYYY.MM.DD HH
+   - daily:   X축 1칸 = 1일,   범위 ≤ 7일, 입력 YYYY.MM.DD ~ YYYY.MM.DD
+   - weekly:  X축 1칸 = 1주,   범위 ≤ 4개월, 입력 YYYY.MM ~ YYYY.MM
+   - monthly: X축 1칸 = 1개월, 범위 ≤ 12개월, 입력 YYYY.MM ~ YYYY.MM
+*/
+const STEPS = [
+  { id: 'hourly',  label: 'hourly',  desc: '1시간 단위',  points: 24, xfmt: (i, r) => {
+      if(!r) return String(i).padStart(2,'0');
+      const [sd, sh] = r.start.split(' ');
+      const dt = new Date(parseDay(sd).getTime() + ((+sh)+i)*3600000);
+      /* hourly — 24시각 체계 HH만 표출 (날짜 겹침 방지) */
+      return pad2(dt.getHours());
+    } },
+  { id: 'daily',   label: 'daily',   desc: '1일 단위',    points: 7,  xfmt: (i, r) => {
+      if(!r) return String(i+1);
+      const dt = new Date(parseDay(r.start).getTime() + i*86400000);
+      return `${pad2(dt.getMonth()+1)}/${pad2(dt.getDate())}`;
+    } },
+  { id: 'weekly',  label: 'weekly',  desc: '1주 단위 (Sun-Sat · 일요일 시작)', points: 18, xfmt: (i, r) => {
+      if(!r) return 'W'+(i+1);
+      const p = parseWeekly(r.start);
+      // ISO week +i: advance Monday by i*7 days, then read ISO week
+      const mon = isoWeekStartDate(p.y, p.w);
+      mon.setDate(mon.getDate() + i*7);
+      const iso = isoWeekOf(mon);
+      return `W${pad2(iso.w)}/${pad2(mon.getMonth()+1)}`;
+    } },
+  { id: 'monthly', label: 'monthly', desc: '1개월 단위',  points: 12, xfmt: (i, r) => {
+      if(!r) return ['Jun','Jul','Aug','Sep','Oct','Nov','Dec','Jan','Feb','Mar','Apr','May'][i];
+      const [sy, sm] = r.start.split('-').map(Number);
+      const m0 = sy*12 + (sm-1) + i;
+      const y = Math.floor(m0/12); const m = (m0%12) + 1;
+      /* monthly — YY'mm 표기 (연·월 구분: e.g. 26'05) */
+      return `${String(y).slice(-2)}'${pad2(m)}`;
+    } },
+];
+
+/* ---------- date helpers ---------- */
+const pad2 = (n) => String(n).padStart(2,'0');
+function parseDay(s){ const [y,m,d] = s.split('-').map(Number); return new Date(y, m-1, d); }
+function fmtDay(dt){ return `${dt.getFullYear()}-${pad2(dt.getMonth()+1)}-${pad2(dt.getDate())}`; }
+function addDays(dt, n){ const d = new Date(dt); d.setDate(d.getDate()+n); return d; }
+function diffDaysIncl(a, b){ return Math.round((parseDay(b)-parseDay(a))/86400000)+1; }
+function diffMonthsIncl(a, b){ const [ay,am]=a.split('-').map(Number); const [by,bm]=b.split('-').map(Number); return (by-ay)*12+(bm-am)+1; }
+function sameDay(a, b){ return a.getTime()===b.getTime(); }
+function baseDateOf(end){
+  if(!end) return '';
+  if(end.includes(' ')){ const [d,h]=end.split(' '); return `${d} ${h}:00`; }
+  if(end.length===7) return end + '-01';
+  return end;
+}
+function defaultRangeFor(stepId){
+  if(stepId==='hourly')  return { start:'2026-05-12 00', end:'2026-05-12 23' };
+  if(stepId==='daily')   return { start:'2026-05-06', end:'2026-05-12' };
+  if(stepId==='weekly')  return { start:'2026-W18', end:'2026-W22' };
+  if(stepId==='monthly') return { start:'2025-06', end:'2026-05' };
+  return { start:'', end:'' };
+}
+function fmtRangeDisplay(stepId, range){
+  if(!range || !range.start) return '—';
+  const dot = (s) => s.replaceAll('-','.');
+  if(stepId==='hourly'){
+    const [sd,sh] = range.start.split(' '); const [ed,eh] = range.end.split(' ');
+    return `${dot(sd)} ${sh}시 ~ ${dot(ed)} ${eh}시`;
+  }
+  if(stepId==='weekly'){
+    const ps = parseWeekly(range.start); const pe = parseWeekly(range.end);
+    return `${ps.y}-${weekOrdinal(ps.w)} ~ ${pe.y}-${weekOrdinal(pe.w)}`;
+  }
+  return `${dot(range.start)} ~ ${dot(range.end)}`;
+}
+function endTokenForFile(stepId, range){
+  if(stepId==='hourly') return range.end.replace(' ','_').replaceAll('-','');
+  return range.end.replaceAll('-','');
+}
+function endLabelForTable(stepId, range){
+  if(stepId==='hourly') { const [d,h]=range.end.split(' '); return `${d} ${h}:00`; }
+  return range.end;
+}
+function monthsBetween(startStr, endStr){
+  const [sy,sm]=startStr.split('-').map(Number); const [ey,em]=endStr.split('-').map(Number);
+  const out=[]; let y=sy, m=sm;
+  while(y<ey || (y===ey && m<=em)){ out.push(`${y}-${pad2(m)}`); m++; if(m>12){m=1;y++;} }
+  return out;
+}
+
+/* v5.0 (260519) — 캘린더 시작일 = 일요일 일괄 적용. 주(week) 정의도 Sun-Sat 로 통일.
+   주 1 = 1월 1일이 포함된 주 · 주의 시작 = 일요일.
+   저장 포맷 = "YYYY-Www" (예: 2026-W19) — 외형은 동일, 의미만 Sun-Sat. */
+function isoWeekOf(dt){
+  /* Sun-Sat 기준 주차 산정 — 함수명은 호환 유지 (실 의미: Sun-Sat). */
+  const d = new Date(dt.getTime()); d.setHours(0,0,0,0);
+  // Move to Sunday of current week
+  const sun = new Date(d); sun.setDate(d.getDate() - d.getDay());
+  const y = sun.getFullYear();
+  // First Sunday on/before Jan 1 of that year
+  const jan1 = new Date(y, 0, 1);
+  const firstSun = new Date(jan1); firstSun.setDate(jan1.getDate() - jan1.getDay());
+  const w = Math.round((sun - firstSun) / (7 * 86400000)) + 1;
+  return { y, w };
+}
+function isoWeekStartDate(isoYear, isoWeek){
+  // Returns Sunday (00:00) of given Sun-Sat week
+  const jan1 = new Date(isoYear, 0, 1);
+  const firstSun = new Date(jan1); firstSun.setDate(jan1.getDate() - jan1.getDay());
+  const out = new Date(firstSun); out.setDate(firstSun.getDate() + (isoWeek - 1) * 7);
+  out.setHours(0,0,0,0);
+  return out;
+}
+function isoWeeksInYear(year){
+  return isoWeekOf(new Date(year, 11, 28)).w;
+}
+function parseWeekly(s){
+  // Format: "YYYY-Www"  (예: 2026-W19)
+  const m = (s||'').match(/^(\d{4})-W(\d{1,2})$/);
+  if(!m) return { y: 2026, w: 1 };
+  return { y: +m[1], w: +m[2] };
+}
+function fmtWeekly(y, w){ return `${y}-W${pad2(w)}`; }
+function weekIdx(s){ const p = parseWeekly(s); return isoWeekStartDate(p.y, p.w).getTime(); }
+function weeklyYM(s){ const p = parseWeekly(s); const st = isoWeekStartDate(p.y, p.w); return `${st.getFullYear()}-${pad2(st.getMonth()+1)}`; }
+function weekOrdinal(n){ const s=['th','st','nd','rd'],v=n%100; return n + (s[(v-20)%10] || s[v] || s[0]); }
+
+function effectivePoints(stepId, range){
+  if(!range || !range.start) return 1;
+  if(stepId==='hourly'){
+    const [sd,sh] = range.start.split(' '); const [ed,eh] = range.end.split(' ');
+    const s = new Date(parseDay(sd).getTime() + (+sh)*3600000);
+    const e = new Date(parseDay(ed).getTime() + (+eh)*3600000);
+    return Math.max(1, Math.min(200, Math.round((e-s)/3600000) + 1));
+  }
+  if(stepId==='daily') return Math.max(1, Math.min(200, diffDaysIncl(range.start, range.end)));
+  if(stepId==='weekly'){
+    return Math.max(1, Math.min(200, Math.round((weekIdx(range.end) - weekIdx(range.start)) / (7*86400000)) + 1));
+  }
+  if(stepId==='monthly') return Math.max(1, Math.min(200, diffMonthsIncl(range.start, range.end)));
+  return 12;
+}
+
+const SERIES_COLORS = ['#378ADD', '#1D9E75', '#a82323', '#854f0b', '#7a3fc9', '#0a8a8a', '#c47000', '#444'];
+
+const CHART_GROUPS = {
+  host: [
+    { id: 'cpu',        title: 'CPU 추이',              unit: '%',    members: ['cpu-core','cpu-avg','cpu-cont'] },
+    { id: 'mem',        title: '메모리 추이',            unit: 'GB',   members: ['mem-used'] },
+    { id: 'net-bw',     title: '네트워크 대역폭',         unit: 'Mbps', members: ['net-bw'] },
+    { id: 'net-tp-r',   title: '네트워크 Throughput (읽기)',     unit: 'Mbps', members: ['net-tp-r'] },
+    { id: 'net-tp-w',   title: '네트워크 Throughput (쓰기)',     unit: 'Mbps', members: ['net-tp-w'] },
+    { id: 'net-pkt-r',  title: '네트워크 패킷량 (읽기)',          unit: 'pkt',  members: ['net-pkt-r'] },
+    { id: 'net-pkt-w',  title: '네트워크 패킷량 (쓰기)',          unit: 'pkt',  members: ['net-pkt-w'] },
+    { id: 'net-err-r',  title: '네트워크 에러율 (읽기)',          unit: '%',    members: ['net-err-r'], note: '계산 도출 (rx_errors / rx_packets × 100)' },
+    { id: 'net-err-w',  title: '네트워크 에러율 (쓰기)',          unit: '%',    members: ['net-err-w'], note: '계산 도출 (tx_errors / tx_packets × 100)' },
+    { id: 'net-drop-r', title: '네트워크 드랍율 (읽기)',          unit: '%',    members: ['net-drop-r'], note: '계산 도출 (rx_dropped / rx_packets × 100)' },
+    { id: 'net-drop-w', title: '네트워크 드랍율 (쓰기)',          unit: '%',    members: ['net-drop-w'], note: '계산 도출 (tx_dropped / tx_packets × 100)' },
+    { id: 'disk',       title: '디스크 사용량 / 사용률',  unit: 'GB / %', members: ['disk-d','disk-fs','disk-nas','disk-rate'] },
+  ],
+  vm: [
+    { id: 'vm-cpu',       title: 'CPU 추이',              unit: '%',    members: ['vm-cpu-core','vm-cpu-avg','vm-cpu-cont'] },
+    { id: 'vm-mem',       title: '메모리 추이',            unit: 'GB',   members: ['vm-mem-used','vm-mem-free','vm-mem-cont'] },
+    { id: 'vm-net-bw',    title: '네트워크 대역폭',         unit: 'Mbps', members: ['vm-net-bw'] },
+    { id: 'vm-net-tp-r',  title: '네트워크 Throughput (읽기)',     unit: 'Mbps', members: ['vm-net-tp-r'] },
+    { id: 'vm-net-tp-w',  title: '네트워크 Throughput (쓰기)',     unit: 'Mbps', members: ['vm-net-tp-w'] },
+    { id: 'vm-net-pkt-r', title: '네트워크 패킷량 (읽기)',          unit: 'pkt',  members: ['vm-net-pkt-r'] },
+    { id: 'vm-net-pkt-w', title: '네트워크 패킷량 (쓰기)',          unit: 'pkt',  members: ['vm-net-pkt-w'] },
+    { id: 'vm-net-err-r', title: '네트워크 에러율 (읽기)',          unit: '%',    members: ['vm-net-err-r'], note: '계산 도출' },
+    { id: 'vm-net-err-w', title: '네트워크 에러율 (쓰기)',          unit: '%',    members: ['vm-net-err-w'], note: '계산 도출' },
+    { id: 'vm-net-drop-r',title: '네트워크 드랍율 (읽기)',          unit: '%',    members: ['vm-net-drop-r'], note: '계산 도출' },
+    { id: 'vm-net-drop-w',title: '네트워크 드랍율 (쓰기)',          unit: '%',    members: ['vm-net-drop-w'], note: '계산 도출' },
+    { id: 'vm-disk',      title: '디스크 사용량 / 사용률',  unit: 'GB / %', members: ['vm-disk-d','vm-disk-fs','vm-disk-rate'] },
+    { id: 'vm-disk-io-r', title: '디스크 IOPS / Throughput (읽기)', unit: 'cps / bps', members: ['vm-disk-iops-r','vm-disk-tp-r'] },
+    { id: 'vm-disk-io-w', title: '디스크 IOPS / Throughput (쓰기)', unit: 'cps / bps', members: ['vm-disk-iops-w','vm-disk-tp-w'] },
+    /* v5.0 — chartType:'area' 일괄 제거 (Line 통일). v4.0 미터링 그룹은 분리됨. */
+  ],
+};
+
+const INFO_DEFS = {
+  'cpu-core':  { name: 'CPU 사용률 (코어당)',  formula: '(코어 busy time / total time) × 100', source: '/proc/stat (user+system+iowait)', agg: '코어별 측정 → Avg/Max/Min', unit: '%' },
+  'cpu-avg':   { name: 'CPU 사용률 (평균)',    formula: '전체 코어 합산 busy / 코어수 × 100',  source: '/proc/stat',                     agg: 'Avg/Max/Min',           unit: '%' },
+  'cpu-cont':  { name: 'CPU 경합률',            formula: 'run-queue 대기 / 코어수 × 100',       source: 'vmstat r / /proc/schedstat',     agg: 'Avg/Max/Min',           unit: '%' },
+  'mem-used':  { name: '메모리 Used',           formula: 'MemTotal − MemFree − Buffers − Cached', source: '/proc/meminfo',              agg: '스냅샷',                unit: 'byte' },
+  'net-bw':    { name: '네트워크 대역폭',        formula: '(rx+tx) × 8 / interval',                source: 'ethtool / /proc/net/dev',    agg: 'Avg/Max/Min',           unit: 'bps' },
+  'net-err-r': { name: '네트워크 에러율 (읽기)', formula: '(rx_errors / rx_packets) × 100',        source: '/proc/net/dev',              agg: '계산 도출 (별도 차트)',   unit: '%' },
+  'net-err-w': { name: '네트워크 에러율 (쓰기)', formula: '(tx_errors / tx_packets) × 100',        source: '/proc/net/dev',              agg: '계산 도출 (별도 차트)',   unit: '%' },
+  'net-drop-r':{ name: '네트워크 드랍율 (읽기)', formula: '(rx_dropped / rx_packets) × 100',       source: '/proc/net/dev',              agg: '계산 도출 (별도 차트)',   unit: '%' },
+  'net-drop-w':{ name: '네트워크 드랍율 (쓰기)', formula: '(tx_dropped / tx_packets) × 100',       source: '/proc/net/dev',              agg: '계산 도출 (별도 차트)',   unit: '%' },
+  'disk-rate': { name: '디스크 사용률',          formula: '(Used / Total) × 100',                  source: 'df -h',                      agg: '스냅샷',                unit: '%' },
+  /* v2.0 미터링 지표 */
+  'm-life':       { name: '인스턴스 존재 기간 (누적)', formula: 'Σ (인스턴스 생성~삭제 사이 경과 시간)', source: 'nova.instance lifecycle log', agg: '기간 단위 누적 · 📊 대상별 BarChart list', unit: 'hour' },
+  'm-active':     { name: '인스턴스 활성 시간 (누적)', formula: 'Σ (state=ACTIVE 구간 시간)',          source: 'nova.instance state log',     agg: '기간 단위 누적 · ⚠ 차트 미제공 (표·CSV만)', unit: 'hour' },
+  'm-active-rate':{ name: '인스턴스 활성률 (누적)',     formula: '(활성 시간 / 존재 기간) × 100',    source: '파생 지표 (m-active / m-life)',  agg: '대상별 BarChart list (0~100%)',         unit: '%' },
+  'm-vol-cnt':    { name: 'Attached 볼륨 개수',           formula: 'count(attached volume @ tick)',      source: 'cinder.attachments',          agg: 'Avg/Max · LineChart',                            unit: 'ea' },
+  'm-vol-size':   { name: 'Attached 볼륨 크기',           formula: 'Σ attached volume size',                source: 'cinder.attachments × cinder.volumes', agg: 'Avg/Max · AreaChart',                          unit: 'byte' },
+  'm-vcpu':       { name: '할당 가상 CPU Core 수',       formula: 'Σ instance.vcpus',                       source: 'nova.flavor',                  agg: 'Avg/Max · AreaChart',                          unit: 'core' },
+  'm-vmem':       { name: '할당 가상 메모리 크기',     formula: 'Σ instance.memory_mb',                   source: 'nova.flavor',                  agg: 'Avg/Max · AreaChart',                          unit: 'byte' },
+};
+
+function seedRand(seed) {
+  let s = seed >>> 0;
+  return () => { s = (s * 1664525 + 1013904223) >>> 0; return s / 0x100000000; };
+}
+function genSeries(seed, points, base, amp, floor=0, ceil=100) {
+  const r = seedRand(seed);
+  const out = [];
+  let cur = base + (r() - 0.5) * amp * 0.4;
+  for (let i = 0; i < points; i++) {
+    cur += (r() - 0.5) * amp * 0.6;
+    cur = Math.max(floor, Math.min(ceil, cur));
+    const avg = cur;
+    const min = Math.max(floor, avg - r() * amp * 0.6);
+    const max = Math.min(ceil, avg + r() * amp * 0.6);
+    /* v5.0 — median: min~max 범위 안, avg에서 약간 어긋난 값 (실분포 시 avg와 median은 차이남) */
+    const median = Math.max(min, Math.min(max, avg + (r() - 0.5) * amp * 0.35));
+    out.push({ min: +min.toFixed(2), max: +max.toFixed(2), avg: +avg.toFixed(2), median: +median.toFixed(2) });
+  }
+  return out;
+}
+function metricAxis(groupId, allValues, unit) {
+  /* v5.0 (260519) 수정 — Y축은 조회 기간 내 최대값 기준으로 자동 산정.
+     · 모든 지표 공통: lo=0, hi = ceil(max × 1.15) (단위별로 보기 좋은 라운딩)
+     · max=0 인 경우 단위별 기본 스케일 사용 */
+  const m = groupId || '';
+  const maxV = allValues && Number.isFinite(allValues.max) ? allValues.max : 0;
+  if (maxV <= 0) {
+    if (unit === '%') return { lo: 0, hi: 100 };
+    if (unit && unit.includes('GB')) return { lo: 0, hi: 64 };
+    if (unit && unit.includes('Mbps')) return { lo: 0, hi: 500 };
+    if (unit && unit.includes('pkt')) return { lo: 0, hi: 5000 };
+    if (m.includes('disk-io')) return { lo: 0, hi: 200 };
+    return { lo: 0, hi: 100 };
+  }
+  const target = maxV * 1.15;
+  /* 보기 좋은 단위로 ceil */
+  const stepSize = (v) => {
+    if (v <= 2)   return 0.2;
+    if (v <= 5)   return 0.5;
+    if (v <= 10)  return 1;
+    if (v <= 50)  return 5;
+    if (v <= 100) return 10;
+    if (v <= 500) return 25;
+    if (v <= 1000) return 50;
+    if (v <= 5000) return 200;
+    if (v <= 10000) return 500;
+    if (v <= 50000) return 2000;
+    return Math.pow(10, Math.floor(Math.log10(v)) - 1);
+  };
+  const s = stepSize(target);
+  const hi = Math.ceil(target / s) * s;
+  return { lo: 0, hi };
+}
+
+/* ============================================================
+   COMPONENTS
+   ============================================================ */
+
+function Topbar() {
+  return (
+    <div className="topbar">
+      <div className="crumb">
+        모니터링 / <b>집계 보고서</b>
+        <span style={{marginLeft:8, color:'var(--ink-3)'}}>· lo-fi 프로토타입 (US-CON-006 · v5.0 / 260519)</span>
+      </div>
+      <div className="meta">
+        <span>화면 폭 1440px 고정</span>
+        <span>운영자 | admin@okestro</span>
+        <span className="wf-tag">v5.0 · median 지표 추가 + 행수 선택(20~100) + %축 max 100 + Line 통일 + 캘린더 Sun 시작 + 지표 저장 계정별</span>
+      </div>
+    </div>
+  );
+}
+
+/* 로드맵 / 미터링 / 중위값 정보 배너 (v1.6) */
+function InfoBanner() {
+  return (
+    <div className="info-banner">
+      <div className="col">
+        <span className="lbl">v5.0 (260519) 핵심 변경</span>
+        <span className="val"><em>median(중위값)</em> 지표 추가 · 필터/데이터/차트 일괄 반영 · 지표별 수집 항목 <b>min / avg / max / median</b> 4계열</span>
+      </div>
+      <div className="col">
+        <span className="lbl">데이터 테이블</span>
+        <span className="val">행 조회 개수 <b>선택형</b> (default <em>20행</em> · 50 · 100) · RAW 샘플 페이지네이션</span>
+      </div>
+      <div className="col">
+        <span className="lbl">차트 정비</span>
+        <span className="val">세부 지표별 카드 1개 · 송/수신 좌·우 페어 · default <b>avg만 표출</b> · Y축 <em>자동 스케일</em></span>
+      </div>
+      <div className="col">
+        <span className="lbl">캘린더 · 저장</span>
+        <span className="val">달력 시작일 <b>일요일(Sun)</b> 일괄 적용 · <em>[지표 저장]</em> = 계정별 영구 보존</span>
+      </div>
+    </div>
+  );
+}
+
+/* 아코디언 래퍼 (v1.6 — default 접힘/펼침 옵션) */
+function Accordion({ title, sub, badge, defaultOpen=false, children, headerExtra, footer, summaryWhenClosed }) {
+  const [open, setOpen] = useState(defaultOpen);
+  return (
+    <div className="wf-box">
+      <div className="wf-cap acc-cap" onClick={()=>setOpen(o=>!o)}>
+        <span style={{display:'flex', alignItems:'center', gap:8}}>
+          <span className="acc-arrow">{open ? '▾' : '▸'}</span>
+          <span>{title}</span>
+          {sub && <span className="sub">— {sub}</span>}
+        </span>
+        <span style={{display:'flex', alignItems:'center', gap:8}} onClick={e=>e.stopPropagation()}>
+          {badge}
+          {headerExtra}
+        </span>
+      </div>
+      {open ? (
+        <>
+          <div className="acc-body">{children}</div>
+          {footer}
+        </>
+      ) : (
+        summaryWhenClosed && <div className="acc-collapsed-hint">{summaryWhenClosed}</div>
+      )}
+    </div>
+  );
+}
+
+function CategoryRow({ value, onChange }) {
+  return (
+    <div className="cat-row">
+      {CATEGORIES.map(c => (
+        <div key={c.id}
+             className={'cat-tab ' + c.id + (value === c.id ? ' on' : '')}
+             onClick={() => onChange(c.id)}>
+          <span className="dot"></span>
+          <span>{c.label}</span>
+          <span className="sub">· {c.sub}</span>
+        </div>
+      ))}
+    </div>
+  );
+}
+
+function TargetPanel({ category, projectId, setProjectId, search, setSearch, selected, setSelected }) {
+  const isVm = category === 'vm';
+  const [ddOpen, setDdOpen] = useState(false);
+  const [selSearch, setSelSearch] = useState('');
+  const [selView, setSelView] = useState('group'); // 'flat' | 'group'
+  const [collapsedGroups, setCollapsedGroups] = useState({});
+  let raw = isVm ? (projectId ? TARGETS.vm[projectId] || [] : []) : (TARGETS[category] || []);
+  const q = search.trim().toLowerCase();
+  const list = q ? raw.filter(t => (t.name + ' ' + t.group).toLowerCase().includes(q)) : raw;
+  const onCount = list.filter(t => selected[t.id]).length;
+  const allOn = list.length > 0 && onCount === list.length;
+  const someOn = onCount > 0 && !allOn;
+  const selectedList = raw.filter(t => selected[t.id]);
+
+  /* 선택 완료 리스트 필터링 */
+  const selQ = selSearch.trim().toLowerCase();
+  const filteredSel = selQ ? selectedList.filter(t => (t.name + ' ' + t.group).toLowerCase().includes(selQ)) : selectedList;
+
+  /* 그룹별 묶기 (그룹뷰일 때) */
+  const grouped = useMemo(() => {
+    const map = new Map();
+    filteredSel.forEach(t => {
+      if (!map.has(t.group)) map.set(t.group, []);
+      map.get(t.group).push(t);
+    });
+    return Array.from(map.entries());
+  }, [filteredSel.map(t=>t.id).join(','), selView]);
+
+  /* 닫혔을 때 요약 텍스트 */
+  const closedSummary = (
+    <>
+      <b style={{color:'var(--ink)'}}>{selectedList.length}개</b> 선택됨
+      {selectedList.length > 0 && (
+        <span style={{marginLeft:8}}>
+          ({selectedList.slice(0,4).map(t=>t.name).join(', ')}{selectedList.length>4?` 외 ${selectedList.length-4}개`:''})
+        </span>
+      )}
+      {selectedList.length===0 && <span style={{marginLeft:8}}>— 펼쳐서 대상을 선택하세요</span>}
+    </>
+  );
+
+  const toggleAllVisible = () => {
+    const next = {...selected};
+    list.forEach(t => { next[t.id] = !allOn; });
+    setSelected(next);
+  };
+
+  return (
+    <Accordion
+      title="① 집계 대상 선택"
+      sub={CATEGORIES.find(c=>c.id===category)?.label}
+      defaultOpen={false}
+      badge={<span className="wf-tag">{selectedList.length}개 선택</span>}
+      summaryWhenClosed={closedSummary}>
+      <div className="target-pad">
+        {isVm && (
+          <div style={{display:'flex', alignItems:'center', gap:8}}>
+            <label style={{fontSize:11, color:'var(--ink-3)', minWidth: 130}}>프로젝트 (VM 필수 선행)</label>
+            <select className="wf-select" style={{flex:'0 0 320px'}}
+                    value={projectId || ''}
+                    onChange={(e)=>{ setProjectId(e.target.value || null); setSelected({}); }}>
+              <option value="">— 프로젝트를 선택하세요 —</option>
+              {PROJECTS.map(p => <option key={p.id} value={p.id}>{p.name}</option>)}
+            </select>
+          </div>
+        )}
+
+        <div className="target-row">
+          <div className="left">
+            <label style={{fontSize:11, color:'var(--ink-3)'}}>대상 선택 (드롭다운 · 체크박스)</label>
+            <div className="target-dd-wrap">
+              <button className="target-dd-btn" onClick={()=>setDdOpen(o=>!o)} disabled={isVm && !projectId}
+                      style={{opacity: (isVm && !projectId)?0.5:1, cursor:(isVm && !projectId)?'not-allowed':'pointer'}}>
+                <span>
+                  {isVm && !projectId ? <span className="ph">프로젝트를 먼저 선택하세요</span>
+                    : selectedList.length === 0 ? <span className="ph">대상을 선택하세요…</span>
+                    : <b>{selectedList.length}개 선택됨</b>}
+                </span>
+                <span style={{fontSize:10, color:'var(--ink-3)'}}>{ddOpen?'▴':'▾'}</span>
+              </button>
+              {ddOpen && (
+                <>
+                  <div style={{position:'fixed', inset:0, zIndex: 29}} onClick={()=>setDdOpen(false)}></div>
+                  <div className="target-dd-menu">
+                    <div className="target-dd-search">
+                      <input type="search" placeholder="이름·그룹 검색" value={search} onChange={e=>setSearch(e.target.value)} autoFocus />
+                    </div>
+                    {/* 마스터 체크박스 — 일괄 선택/해제 */}
+                    <div className="target-dd-master" onClick={toggleAllVisible}>
+                      <span className={'wf-check ' + (allOn ? 'on' : someOn ? 'partial' : '')}>
+                        {allOn ? '✓' : someOn ? '─' : ''}
+                      </span>
+                      <span>{allOn ? '전체 해제' : '전체 선택'}</span>
+                      <span className="cnt-tag">{onCount} / {list.length}</span>
+                    </div>
+                    <div className="target-dd-list">
+                      {list.length === 0 ? (
+                        <div style={{padding:'14px', textAlign:'center', color:'var(--ink-3)', fontSize:11}}>조건에 맞는 대상이 없습니다.</div>
+                      ) : list.map(t => {
+                        const on = !!selected[t.id];
+                        return (
+                          <div key={t.id} className="target-dd-item" onClick={()=>setSelected(s => ({...s, [t.id]: !on}))}>
+                            <span className={'wf-check ' + (on?'on':'')}>{on ? '✓' : ''}</span>
+                            <span>{t.name}</span>
+                            <span className="grp">{t.group}</span>
+                          </div>
+                        );
+                      })}
+                    </div>
+                    <div className="target-dd-foot">
+                      <span>표시 {list.length}개 · 전체 {raw.length}개</span>
+                      <button className="wf-btn sm primary" onClick={()=>setDdOpen(false)}>완료</button>
+                    </div>
+                  </div>
+                </>
+              )}
+            </div>
+          </div>
+
+          <div className="right">
+            <div className="sel-list-box">
+              <div className="sel-list-head">
+                <span className="lbl">선택 완료 항목</span>
+                <span><span className="cnt">{selectedList.length}</span><span style={{color:'var(--ink-3)'}}>건</span></span>
+                {selectedList.length > 0 && (
+                  <button className="wf-btn sm" onClick={()=>{
+                    const next = {...selected};
+                    selectedList.forEach(t => { next[t.id] = false; });
+                    setSelected(next);
+                  }}>모두 제거</button>
+                )}
+              </div>
+              {selectedList.length > 0 && (
+                <div className="sel-list-tools">
+                  <input type="search" placeholder="선택된 항목 내 검색" value={selSearch} onChange={e=>setSelSearch(e.target.value)} />
+                  <div className="seg-mini" title="보기 방식">
+                    <button className={selView==='group'?'on':''} onClick={()=>setSelView('group')}>그룹별</button>
+                    <button className={selView==='flat'?'on':''} onClick={()=>setSelView('flat')}>플랫</button>
+                  </div>
+                </div>
+              )}
+              <div className={'sel-list-body' + (selView==='group'?' grouped':'')}>
+                {selectedList.length === 0 ? (
+                  <div className="sel-list-empty">선택된 대상이 없습니다.<br/>드롭다운에서 체크박스로 선택하세요.</div>
+                ) : filteredSel.length === 0 ? (
+                  <div className="sel-list-empty">검색 결과가 없습니다.</div>
+                ) : selView === 'flat' ? (
+                  filteredSel.map(t => (
+                    <div key={t.id} className="sel-list-row" style={{paddingLeft: 10}}>
+                      <span style={{color:'var(--'+(isVm?'vm':'host')+')', fontSize:11}}>●</span>
+                      <span className="name"><b>{t.name}</b></span>
+                      <span className="grp">{t.group}</span>
+                      <span className="x" onClick={()=>setSelected(s=>({...s, [t.id]: false}))} title="제거">✕</span>
+                    </div>
+                  ))
+                ) : (
+                  grouped.map(([gname, items]) => {
+                    const collapsed = !!collapsedGroups[gname];
+                    return (
+                      <div key={gname} className="sel-list-group">
+                        <div className="sel-list-group-head" onClick={()=>setCollapsedGroups(c=>({...c, [gname]: !collapsed}))}>
+                          <span className="arr">{collapsed ? '▸' : '▾'}</span>
+                          <span style={{color:'var(--'+(isVm?'vm':'host')+')', fontSize:10}}>●</span>
+                          <span className="name">{gname}</span>
+                          <span className="gcnt">{items.length}</span>
+                          <button className="gclear" onClick={(e)=>{
+                            e.stopPropagation();
+                            const next = {...selected};
+                            items.forEach(t => { next[t.id] = false; });
+                            setSelected(next);
+                          }} title="이 그룹 모두 해제">그룹 해제</button>
+                        </div>
+                        {!collapsed && items.map(t => (
+                          <div key={t.id} className="sel-list-row">
+                            <span style={{color:'var(--ink-3)', fontSize:10}}>·</span>
+                            <span className="name"><b>{t.name}</b></span>
+                            <span className="x" onClick={()=>setSelected(s=>({...s, [t.id]: false}))} title="제거">✕</span>
+                          </div>
+                        ))}
+                      </div>
+                    );
+                  })
+                )}
+              </div>
+              {selectedList.length > 0 && (
+                <div className="sel-list-foot">
+                  <span>그룹 {grouped.length}개 · 항목 {filteredSel.length}{selQ?' / '+selectedList.length:''}건 · 최대 선택 제약 없음</span>
+                </div>
+              )}
+            </div>
+          </div>
+        </div>
+      </div>
+    </Accordion>
+  );
+}
+
+function MetricTree({ category, selected, onToggleLeaf, onToggleGroup, onSelectAll, onClearAll, onInfo }) {
+  const groups = METRIC_TREE[category] || [];
+  const isLeafOn = (l) => l.ids.every(id => selected[id]);
+  const totalSelected = groups.flatMap(g=>g.leaves).filter(isLeafOn).length;
+  const totalAll = groups.flatMap(g=>g.leaves).length;
+  const cols = Math.max(2, Math.min(5, groups.length));
+  const closedSummary = (
+    <><b style={{color:'var(--ink)'}}>{totalSelected}/{totalAll}</b> 지표 선택됨 — 펼쳐서 변경하거나 하단 「적용」을 실행하세요.</>
+  );
+  return (
+    <Accordion
+      title="② 지표 선택"
+      sub="모든 지표는 min · avg · max · median 4개 수집 항목을 보유 (v5.0) · 네트워크 읽기/쓰기는 1개 항목으로 통합"
+      defaultOpen={false}
+      badge={<span className="wf-tag">{totalSelected}/{totalAll}</span>}
+      headerExtra={
+        <span className="tree-cap-row">
+          <span style={{fontSize:10.5, color:'var(--ink-3)', display:'inline-flex', alignItems:'center', gap:4, marginRight:6}}>
+            <span>수집 항목:</span>
+            <span style={{display:'inline-flex', gap:3}}>
+              <span className="agg-pill" style={{padding:'1px 5px', fontSize:9.5, border:'1px solid var(--ink-3)', background:'#fff', fontWeight:500, color:'var(--ink-2)', letterSpacing:'.02em'}}>min</span>
+              <span className="agg-pill" style={{padding:'1px 5px', fontSize:9.5, border:'1px solid var(--ink)', background:'var(--ink)', color:'#fff', fontWeight:600, letterSpacing:'.02em'}}>avg</span>
+              <span className="agg-pill" style={{padding:'1px 5px', fontSize:9.5, border:'1px solid var(--ink-3)', background:'#fff', fontWeight:500, color:'var(--ink-2)', letterSpacing:'.02em'}}>max</span>
+              <span className="agg-pill" style={{padding:'1px 5px', fontSize:9.5, border:'1px solid var(--ink)', background:'var(--hi)', color:'var(--ink)', fontWeight:700, letterSpacing:'.02em'}}>median</span>
+            </span>
+            <span style={{fontSize:9, padding:'1px 4px', background:'var(--hi)', border:'1px solid var(--ink)', fontWeight:700, letterSpacing:'.04em'}}>v5.0</span>
+          </span>
+          <button className="wf-btn sm" onClick={onSelectAll}>전체 선택</button>
+          <button className="wf-btn sm" onClick={onClearAll}>전체 해제</button>
+        </span>
+      }
+      summaryWhenClosed={closedSummary}>
+      <div className="tree-grid" style={{gridTemplateColumns: `repeat(${cols}, 1fr)`}}>
+        {groups.map(g => {
+          const selCount = g.leaves.filter(isLeafOn).length;
+          const total = g.leaves.length;
+          const allOn = selCount === total;
+          const partial = selCount > 0 && !allOn;
+          return (
+            <div key={g.id} className="tree-col">
+              <div className="tree-col-head" onClick={()=>onToggleGroup(g, !allOn)}>
+                <span className={'wf-check ' + (allOn ? 'on' : partial ? 'partial' : '')}>
+                  {allOn ? '✓' : partial ? '─' : ''}
+                </span>
+                <span className="tree-name">{g.name}
+                  {g.tag && <span style={{marginLeft:5, fontSize:9, padding:'1px 5px', background:'var(--hi)', border:'1px solid var(--ink)', fontWeight:600, letterSpacing:'.04em'}}>{g.tag}</span>}
+                </span>
+                <span className="tree-badge">{selCount}/{total}</span>
+              </div>
+              <div className="tree-leaves">
+                {g.leaves.map(l => {
+                  const on = isLeafOn(l);
+                  return (
+                    <div key={l.id} className="tree-leaf" onClick={() => onToggleLeaf(l)}>
+                      <span className={'wf-check ' + (on ? 'on' : '')}>{on ? '✓' : ''}</span>
+                      <span style={{flex:1}}>{l.label}</span>
+                      <span className="info-i" title="지표 산정 근거" onClick={(e)=>{e.stopPropagation(); onInfo(l.ids[0]);}}>?</span>
+                    </div>
+                  );
+                })}
+              </div>
+            </div>
+          );
+        })}
+      </div>
+    </Accordion>
+  );
+}
+
+function FilterBar({ step, setStep, dateRange, setDateRange }) {
+  const [open, setOpen] = useState(false);
+  const stepObj = STEPS.find(s => s.id === step);
+  return (
+    <Accordion
+      title="③ 조회 조건"
+      sub="수집 단위(step) · 수집 시작 ~ 수집 종료 (양끝 일시 포함) · 캘린더 시작일 = 일요일 (v5.0)"
+      defaultOpen={true}
+      badge={<span className="wf-tag">{stepObj.label} · {fmtRangeDisplay(step, dateRange)}</span>}>
+      <div className="filter-bar" style={{position:'relative'}}>
+        <div className="field">
+          <span className="lbl">step</span>
+          <div className="wf-seg">
+            {STEPS.map(p => (
+              <button key={p.id} className={step===p.id?'on':''} onClick={()=>setStep(p.id)} title={p.desc}>
+                {p.label}
+              </button>
+            ))}
+          </div>
+          <span className="hint">{stepObj.desc}</span>
+        </div>
+        <div className="field">
+          <span className="lbl">수집 기간</span>
+          <button className="date-pick" onClick={()=>setOpen(o=>!o)}>
+            📅 <span style={{minWidth: step==='hourly'?260:160, display:'inline-block', textAlign:'center'}}>{fmtRangeDisplay(step, dateRange)}</span>
+            <span style={{marginLeft:8, fontSize:10, color:'var(--ink-3)'}}>▾</span>
+          </button>
+          <span className="hint" style={{marginLeft:4}}>※ 시작·종료 <b style={{color:'var(--ink-2)'}}>일시 모두 포함</b></span>
+        </div>
+        {open && (
+          <CalendarPopover step={step} stepObj={stepObj} dateRange={dateRange} setDateRange={setDateRange} onClose={()=>setOpen(false)} />
+        )}
+      </div>
+      {/* v4.0 — 시간대별 수집 기준 안내 (260515 §3.3) */}
+      <div style={{padding:'0 14px 10px', fontSize:11, color:'var(--ink-3)', display:'flex', gap:14, flexWrap:'wrap', borderTop:'1px dashed var(--line)', paddingTop:8}}>
+        <span><b style={{color:'var(--ink-2)'}}>시간(hourly):</b> 매시각 「<code>HH</code>대」 = <code>HH:00 ~ HH:59</code> 수집분 집계 · <b style={{color:'var(--ink)'}}>v5.0 추가</b> — 캘린더 좌·우 듀얼 + <b>시간(HH) 선택 제거</b> (수집 시작=00시 / 수집 종료=23시 자동)</span>
+        <span><b style={{color:'var(--ink-2)'}}>일(daily):</b> 해당 일자 0시 ~ 24시 누적</span>
+        <span><b style={{color:'var(--ink-2)'}}>주(weekly):</b> 일요일 시작 (Sun → Sat) · 캘린더 시작일과 일괄 적용 (v5.0)</span>
+        <span><b style={{color:'var(--ink-2)'}}>월(monthly):</b> 1일 ~ 말일 누적</span>
+      </div>
+      {/* v4.0 (260515) — 집계 기준 설명 (시작·종료일 모두 포함 / 직전까지 데이터 / 당일 변동성) */}
+      <div className="aggr-explain">
+        <div className="aggr-explain-text">
+          <div className="title">
+            <span className="badge">집계 기준</span>
+            <span>시작일·종료일 모두 포함 · Step 구간 직전까지 수집 완료 데이터</span>
+          </div>
+          <ul>
+            <li><b>시작일·종료일을 모두 포함</b>해, 선택 기간의 Step 구간에서 <b>수집 완료된 데이터</b>만 집계합니다.</li>
+            <li>예: <b>2일~4일</b> 선택 시 → <em>2일 00:00 ~ 5일 00:00 직전</em> 데이터 집계</li>
+            <li>선택 기간 내 수집 완료 데이터만 집계되며, <b>당일 데이터는 수집 진행 상태에 따라 변동될 수 있습니다.</b></li>
+          </ul>
+        </div>
+        <div className="aggr-explain-diagram">
+          <svg viewBox="0 0 360 130" width="100%" preserveAspectRatio="xMidYMid meet" style={{display:'block'}}>
+            {/* 가로 축 */}
+            <line x1="20" y1="92" x2="340" y2="92" stroke="#1a1a1a" strokeWidth="1.2"/>
+            {/* Day 1~5 눈금 */}
+            {[1,2,3,4,5].map((d, i) => {
+              const x = 40 + i*65;
+              return (
+                <g key={d}>
+                  <line x1={x} y1="88" x2={x} y2="96" stroke="#1a1a1a" strokeWidth="1.2"/>
+                  <text x={x} y="112" textAnchor="middle" fontSize="11" fontWeight="500" fill="#1a1a1a">Day {d}</text>
+                </g>
+              );
+            })}
+            {/* 사용자 선택 기간 브래킷 (2일 ~ 4일) */}
+            <path d="M 105 28 L 105 18 L 235 18 L 235 28" fill="none" stroke="#1a1a1a" strokeWidth="1.2"/>
+            <text x="170" y="13" textAnchor="middle" fontSize="10.5" fontWeight="600" fill="#1a1a1a">사용자 선택: 2일 ~ 4일</text>
+            {/* 선택 양끝 마커 (2일·4일) */}
+            <circle cx="105" cy="92" r="5" fill="#1677ff" stroke="#1a1a1a" strokeWidth="1.2"/>
+            <circle cx="235" cy="92" r="5" fill="#1677ff" stroke="#1a1a1a" strokeWidth="1.2"/>
+            {/* 3개의 일자별 수집 dome (2일 / 3일 / 4일) */}
+            <path d="M 105 92 Q 137.5 38 170 92" fill="rgba(22,119,255,0.10)" stroke="#1677ff" strokeWidth="1.4"/>
+            <path d="M 170 92 Q 202.5 38 235 92" fill="rgba(22,119,255,0.10)" stroke="#1677ff" strokeWidth="1.4"/>
+            <path d="M 235 92 Q 267.5 38 300 92" fill="rgba(22,119,255,0.10)" stroke="#1677ff" strokeWidth="1.4"/>
+            {/* dome 내부 라벨 */}
+            <text x="137.5" y="74" textAnchor="middle" fontSize="9.5" fill="#1677ff" fontWeight="600">2일 24h</text>
+            <text x="202.5" y="74" textAnchor="middle" fontSize="9.5" fill="#1677ff" fontWeight="600">3일 24h</text>
+            <text x="267.5" y="74" textAnchor="middle" fontSize="9.5" fill="#1677ff" fontWeight="600">4일 24h</text>
+            {/* 5일 00:00 직전 경계 표시 */}
+            <line x1="300" y1="22" x2="300" y2="92" stroke="#854f0b" strokeWidth="1.3" strokeDasharray="3 2"/>
+            <text x="300" y="13" textAnchor="middle" fontSize="9.5" fontWeight="700" fill="#854f0b">5일 00:00 직전</text>
+          </svg>
+          <div className="cap">집계 기준 예시 — 2일~4일 선택 시 데이터 범위</div>
+        </div>
+      </div>
+    </Accordion>
+  );
+}
+
+function CalendarPopover({ step, stepObj, dateRange, setDateRange, onClose }){
+  const [draft, setDraft] = useState(dateRange);
+  const [pickEnd, setPickEnd] = useState(false);
+  const initMonth = (() => {
+    if(step==='hourly') return parseDay(draft.start.split(' ')[0]);
+    if(step==='daily')  return parseDay(draft.start);
+    if(step==='weekly') { const p = parseWeekly(draft.start); const mon = isoWeekStartDate(p.y, p.w); return new Date(mon.getFullYear(), mon.getMonth(), 1); }
+    return new Date(+draft.start.split('-')[0], +draft.start.split('-')[1]-1, 1);
+  })();
+  const [cursor, setCursor] = useState(new Date(initMonth.getFullYear(), initMonth.getMonth(), 1));
+  const validity = useMemo(()=>{
+    /* v1.9: 명확한 유효성 메시지 — 시작 ≤ 종료 검증 */
+    if(step==='hourly'){
+      const [sd,sh]=draft.start.split(' '); const [ed,eh]=draft.end.split(' ');
+      const s = new Date(parseDay(sd).getTime() + (+sh)*3600000);
+      const e = new Date(parseDay(ed).getTime() + (+eh)*3600000);
+      if(e<s) return { ok:false, msg:'⚠ 수집 종료 일시는 수집 시작 이후로 지정하세요' };
+      if(e===s) return { ok:false, msg:'⚠ 수집 시작과 수집 종료가 동일합니다' };
+      const hrs = Math.round((e-s)/3600000);
+      return { ok:true, msg:`✓ ${hrs+1}시간 선택 (수집 시작 ≤ 수집 종료 · 양끝 포함)` };
+    }
+    if(step==='daily'){
+      const days = diffDaysIncl(draft.start, draft.end);
+      if(days<=0) return { ok:false, msg:'⚠ 수집 종료일은 수집 시작일 이후로 지정하세요' };
+      return { ok:true, msg:`✓ ${days}일 선택 (수집 시작 ≤ 수집 종료 · 양끝 포함)` };
+    }
+    if(step==='weekly'){
+      const sw = weekIdx(draft.start); const ew = weekIdx(draft.end);
+      if(ew<sw) return { ok:false, msg:'⚠ 수집 종료 주차는 수집 시작 주차 이후로 지정하세요' };
+      const weeks = Math.round((ew - sw) / (7*86400000)) + 1;
+      return { ok:true, msg:`✓ ${weeks}주 선택 (수집 시작 ≤ 수집 종료 · Sun-Sat 일요일 시작)` };
+    }
+    /* monthly */
+    const months = diffMonthsIncl(draft.start, draft.end);
+    if(months<=0) return { ok:false, msg:'⚠ 수집 종료 월은 수집 시작 월 이후로 지정하세요' };
+    return { ok:true, msg:`✓ ${months}개월 선택 (수집 시작 ≤ 수집 종료 · 양끝 포함)` };
+  }, [draft, step]);
+  const apply = () => { if(validity.ok){ setDateRange(draft); onClose(); } };
+  return (
+    <>
+      <div className="cal-backdrop" onClick={onClose}></div>
+      <div className="cal-popover" style={(step==='weekly' || step==='daily' || step==='hourly') ? {width: 720} : undefined}>
+        <div className="cal-head">
+          <span style={{fontWeight:600}}>수집 기간 선택</span>
+          <span style={{color:'var(--ink-3)', fontSize:11}}>step = <b style={{color:'var(--ink)'}}>{stepObj.label}</b> · {stepObj.desc} · <em style={{background:'var(--hi)', padding:'0 4px', fontStyle:'normal'}}>&lt;a-range-picker picker="{step === 'weekly' ? 'week' : step === 'monthly' ? 'month' : 'date'}"&gt;</em></span>
+          <button className="wf-btn sm" onClick={onClose} style={{marginLeft:'auto'}}>✕</button>
+        </div>
+        {step==='hourly' && <HourlyPicker cursor={cursor} setCursor={setCursor} draft={draft} setDraft={setDraft} pickEnd={pickEnd} setPickEnd={setPickEnd} />}
+        {step==='daily'  && <DailyPicker  cursor={cursor} setCursor={setCursor} draft={draft} setDraft={setDraft} pickEnd={pickEnd} setPickEnd={setPickEnd} />}
+        {step==='weekly' && <WeeklyPicker cursor={cursor} setCursor={setCursor} draft={draft} setDraft={setDraft} pickEnd={pickEnd} setPickEnd={setPickEnd} />}
+        {step==='monthly' && <MonthPicker cursor={cursor} setCursor={setCursor} draft={draft} setDraft={setDraft} />}
+        <div className="cal-foot">
+          <span className={'cal-validity ' + (validity.ok?'ok':'bad')}>{validity.ok?'✓':'⚠'} {validity.msg}</span>
+          <div style={{display:'flex', gap:6}}>
+            <button className="wf-btn sm" onClick={()=>setDraft(defaultRangeFor(step))}>초기화</button>
+            <button className="wf-btn sm" onClick={onClose}>취소</button>
+            <button className="wf-btn sm primary" disabled={!validity.ok} onClick={apply} style={{opacity:validity.ok?1:.4, cursor:validity.ok?'pointer':'not-allowed'}}>적용</button>
+          </div>
+        </div>
+      </div>
+    </>
+  );
+}
+
+function MonthGrid({ cursor, setCursor, isInRange, isEdge, onPickDay, isDisabled }){
+  const startWeekday = new Date(cursor.getFullYear(), cursor.getMonth(), 1).getDay();
+  const daysInMonth = new Date(cursor.getFullYear(), cursor.getMonth()+1, 0).getDate();
+  const cells = [];
+  for(let i=0;i<startWeekday;i++) cells.push(null);
+  for(let d=1; d<=daysInMonth; d++) cells.push(d);
+  while(cells.length%7) cells.push(null);
+  return (
+    <div className="cal-month">
+      <div className="cal-month-head">
+        <button className="wf-btn sm" onClick={()=>setCursor(new Date(cursor.getFullYear(), cursor.getMonth()-1, 1))}>‹</button>
+        <span style={{flex:1, textAlign:'center', fontWeight:600}}>{cursor.getFullYear()}.{pad2(cursor.getMonth()+1)}</span>
+        <button className="wf-btn sm" onClick={()=>setCursor(new Date(cursor.getFullYear(), cursor.getMonth()+1, 1))}>›</button>
+      </div>
+      <div className="cal-dow">
+        {['S','M','T','W','T','F','S'].map((d,i)=>(<span key={i} className={i===0?'sun':i===6?'sat':''}>{d}</span>))}
+      </div>
+      <div className="cal-grid">
+        {cells.map((d, idx) => {
+          if(!d) return <span key={idx} className="cal-cell empty"></span>;
+          const dt = new Date(cursor.getFullYear(), cursor.getMonth(), d);
+          const inR = isInRange(dt); const edge = isEdge(dt);
+          const dis = isDisabled ? isDisabled(dt) : false;
+          return <span key={idx} className={'cal-cell ' + (inR?'in ':'') + (edge?'edge ':'') + (dis?'disabled':'')} onClick={()=>{ if(!dis) onPickDay(dt); }}>{d}</span>;
+        })}
+      </div>
+    </div>
+  );
+}
+
+/* v1.7 캘린더 헬퍼 — 연월일/시 드롭다운 */
+const CAL_YEAR_MIN = 2023;
+const CAL_YEAR_MAX = 2028;
+const daysInMonth = (y, m) => new Date(y, m, 0).getDate(); // m=1..12
+
+function YearMonthDayDD({ ymd, onChange, setCursor }){
+  const [y, m, d] = ymd.split('-').map(Number);
+  const dim = daysInMonth(y, m);
+  const upd = (ny, nm, nd) => {
+    const clampedDay = Math.min(nd, daysInMonth(ny, nm));
+    onChange(`${ny}-${pad2(nm)}-${pad2(clampedDay)}`);
+    setCursor && setCursor(new Date(ny, nm-1, 1));
+  };
+  return (
+    <>
+      <select className="wf-select cal-dd" value={y} onChange={e=>upd(+e.target.value, m, d)}>
+        {Array.from({length: CAL_YEAR_MAX-CAL_YEAR_MIN+1}).map((_,i)=>{const yr=CAL_YEAR_MIN+i; return <option key={yr} value={yr}>{yr}</option>;})}
+      </select>
+      <select className="wf-select cal-dd" value={m} onChange={e=>upd(y, +e.target.value, d)}>
+        {Array.from({length: 12}).map((_,i)=>(<option key={i} value={i+1}>{i+1}월</option>))}
+      </select>
+      <select className="wf-select cal-dd" value={d} onChange={e=>upd(y, m, +e.target.value)}>
+        {Array.from({length: dim}).map((_,i)=>(<option key={i} value={i+1}>{i+1}일</option>))}
+      </select>
+    </>
+  );
+}
+function YearMonthDD({ ym, onChange, setCursor }){
+  const [y, m] = ym.split('-').map(Number);
+  return (
+    <>
+      <select className="wf-select cal-dd" value={y} onChange={e=>{const ny=+e.target.value; onChange(`${ny}-${pad2(m)}`); setCursor && setCursor(new Date(ny, 0, 1));}}>
+        {Array.from({length: CAL_YEAR_MAX-CAL_YEAR_MIN+1}).map((_,i)=>{const yr=CAL_YEAR_MIN+i; return <option key={yr} value={yr}>{yr}</option>;})}
+      </select>
+      <select className="wf-select cal-dd" value={m} onChange={e=>{const nm=+e.target.value; onChange(`${y}-${pad2(nm)}`); setCursor && setCursor(new Date(y, 0, 1));}}>
+        {Array.from({length: 12}).map((_,i)=>(<option key={i} value={i+1}>{i+1}월</option>))}
+      </select>
+    </>
+  );
+}
+
+function HourlyPicker({ cursor, setCursor, draft, setDraft, pickEnd, setPickEnd }){
+  /* v5.0 (260519) 추가 요청 — hourly 캘린더를 daily와 동일하게 좌·우 듀얼 캘린더로 통일.
+     시간(HH) 선택 UI 제거 → 내부 포맷은 호환 유지 ("YYYY-MM-DD HH")
+     · 수집 시작 = 선택일 00시
+     · 수집 종료 = 선택일 23시 (HH:00 ~ HH:59 = 24시간 분량 시간 단위 집계) */
+  const [sDay] = draft.start.split(' ');
+  const [eDay] = draft.end.split(' ');
+  const FIXED_S_HOUR = '00';
+  const FIXED_E_HOUR = '23';
+  const startDt = parseDay(sDay); const endDt = parseDay(eDay);
+  const sIdx = startDt.getTime(); const eIdx = endDt.getTime();
+  const [hover, setHover] = useState(null);
+
+  const leftY = cursor.getFullYear(), leftM = cursor.getMonth();
+  const rightDate = new Date(leftY, leftM + 1, 1);
+  const rightY = rightDate.getFullYear(), rightM = rightDate.getMonth();
+
+  const onPickDay = (dt) => {
+    const idx = dt.getTime();
+    if(!pickEnd){
+      if(idx > eIdx) return;
+      setDraft({ start: fmtDay(dt) + ' ' + FIXED_S_HOUR, end: draft.end });
+      setPickEnd(true);
+    } else {
+      if(idx < sIdx) return;
+      setDraft({ start: draft.start, end: fmtDay(dt) + ' ' + FIXED_E_HOUR });
+    }
+  };
+
+  function MonthCal({ year, month }){
+    const firstOfMonth = new Date(year, month, 1);
+    const firstSunOffset = firstOfMonth.getDay();
+    const firstSun = new Date(year, month, 1 - firstSunOffset);
+    const weeks = [];
+    let cur = new Date(firstSun);
+    for(let wi=0; wi<6; wi++){
+      const row = [];
+      for(let i=0; i<7; i++){
+        row.push(new Date(cur));
+        cur.setDate(cur.getDate() + 1);
+      }
+      const anyInMonth = row.some(d => d.getMonth() === month);
+      if(wi >= 4 && !anyInMonth) break;
+      weeks.push(row);
+    }
+    const monthLabel = ['January','February','March','April','May','June','July','August','September','October','November','December'][month];
+    return (
+      <div className="week-cal">
+        <div className="week-cal-head">{monthLabel} {year}</div>
+        <div className="week-cal-dow">
+          <span className="we">Su</span><span>Mo</span><span>Tu</span><span>We</span><span>Th</span><span>Fr</span><span className="sa">Sa</span>
+        </div>
+        {weeks.map((wk, wi) => (
+          <div key={wi} className="day-cal-row">
+            {wk.map((d, di) => {
+              const sameMonth = d.getMonth() === month;
+              const idx = d.getTime();
+              const inRange = idx >= sIdx && idx <= eIdx;
+              const isEdge  = idx === sIdx || idx === eIdx;
+              const isHover = hover === idx;
+              const dis = !pickEnd ? idx > eIdx : idx < sIdx;
+              const cls = 'day-cal-cell '
+                + (sameMonth ? '' : 'out ')
+                + (isEdge ? 'edge ' : (inRange ? 'in ' : (isHover ? 'hov ' : '')))
+                + (dis ? 'dis' : '');
+              return (
+                <span key={di} className={cls}
+                      onMouseEnter={()=>!dis && sameMonth && setHover(idx)}
+                      onMouseLeave={()=>setHover(null)}
+                      onClick={()=>!dis && sameMonth && onPickDay(d)}
+                      title={fmtDay(d) + (pickEnd ? ' 23시' : ' 00시')}>
+                  {d.getDate()}
+                </span>
+              );
+            })}
+          </div>
+        ))}
+      </div>
+    );
+  }
+
+  return (
+    <div className="cal-body" style={{padding:0}}>
+      {/* v5.0 (260519) 수정 — [수집 시작 / 수집 종료] 토글 버튼 제거. 아래 헤더 필드 클릭으로 동일 동작 (활성 필드 파란 밑줄로 구분) */}
+      <div className="week-rp-input">
+        <div className={'field ' + (!pickEnd ? 'on' : '')} onClick={()=>setPickEnd(false)}>
+          <span className="iso">{sDay}</span>
+          <span style={{color:'var(--ink-3)', fontSize:11}}>00시</span>
+          <span className="cal-ico">📅</span>
+        </div>
+        <span className="arrow">→</span>
+        <div className={'field ' + (pickEnd ? 'on' : '')} onClick={()=>setPickEnd(true)}>
+          <span className="iso">{eDay}</span>
+          <span style={{color:'var(--ink-3)', fontSize:11}}>23시</span>
+          <span className="cal-ico">📅</span>
+        </div>
+      </div>
+      <div className="week-cal-cols">
+        <div className="week-cal-nav">
+          <button onClick={()=>setCursor(new Date(leftY-1, leftM, 1))} title="이전 연도">«</button>
+          <button onClick={()=>setCursor(new Date(leftY, leftM-1, 1))} title="이전 달">‹</button>
+        </div>
+        <MonthCal year={leftY} month={leftM} />
+        <MonthCal year={rightY} month={rightM} />
+        <div className="week-cal-nav">
+          <button onClick={()=>setCursor(new Date(leftY, leftM+1, 1))} title="다음 달">›</button>
+          <button onClick={()=>setCursor(new Date(leftY+1, leftM, 1))} title="다음 연도">»</button>
+        </div>
+      </div>
+      <div className="week-cal-foot-hint">
+        <code>&lt;a-range-picker picker="date"&gt;</code> · 일자 셀 클릭 시 「수집 시작 / 수집 종료」에 반영됩니다 · <b>시간(시) 선택 UI 제거</b> — 수집 시작 = 00시 / 수집 종료 = 23시 자동 고정 · 시간 단위 집계 결과는 <code>HH:00 ~ HH:59</code> 단위 (v5.0 추가)
+      </div>
+    </div>
+  );
+}
+
+function DailyPicker({ cursor, setCursor, draft, setDraft, pickEnd, setPickEnd }){
+  /* v4.0 (260515) — a-range-picker picker="date" 표준 사용성
+     · 좌·우 듀얼 캘린더 (현재월 + 다음월), 일자 단위 클릭 선택
+     · 헤더에 「수집 시작 → 수집 종료」 입력 필드 (활성 입력엔 파란 밑줄) */
+  const startDt = parseDay(draft.start); const endDt = parseDay(draft.end);
+  const sIdx = startDt.getTime(); const eIdx = endDt.getTime();
+  const [hover, setHover] = useState(null);
+
+  const leftY = cursor.getFullYear(), leftM = cursor.getMonth();
+  const rightDate = new Date(leftY, leftM + 1, 1);
+  const rightY = rightDate.getFullYear(), rightM = rightDate.getMonth();
+
+  const onPickDay = (dt) => {
+    const idx = dt.getTime();
+    if(!pickEnd){
+      if(idx > eIdx) return;
+      setDraft({ start: fmtDay(dt), end: draft.end });
+      setPickEnd(true);
+    } else {
+      if(idx < sIdx) return;
+      setDraft({ start: draft.start, end: fmtDay(dt) });
+    }
+  };
+
+  function MonthCal({ year, month }){
+    const firstOfMonth = new Date(year, month, 1);
+    /* v5.0 — 일요일 시작 */
+    const firstSunOffset = firstOfMonth.getDay(); // Sun=0..Sat=6
+    const firstSun = new Date(year, month, 1 - firstSunOffset);
+    const weeks = [];
+    let cur = new Date(firstSun);
+    for(let wi=0; wi<6; wi++){
+      const row = [];
+      for(let i=0; i<7; i++){
+        row.push(new Date(cur));
+        cur.setDate(cur.getDate() + 1);
+      }
+      const anyInMonth = row.some(d => d.getMonth() === month);
+      if(wi >= 4 && !anyInMonth) break;
+      weeks.push(row);
+    }
+    const monthLabel = ['January','February','March','April','May','June','July','August','September','October','November','December'][month];
+    return (
+      <div className="week-cal">
+        <div className="week-cal-head">{monthLabel} {year}</div>
+        <div className="week-cal-dow">
+          <span className="we">Su</span><span>Mo</span><span>Tu</span><span>We</span><span>Th</span><span>Fr</span><span className="sa">Sa</span>
+        </div>
+        {weeks.map((wk, wi) => (
+          <div key={wi} className="day-cal-row">
+            {wk.map((d, di) => {
+              const sameMonth = d.getMonth() === month;
+              const idx = d.getTime();
+              const inRange = idx >= sIdx && idx <= eIdx;
+              const isEdge  = idx === sIdx || idx === eIdx;
+              const isHover = hover === idx;
+              const dis = !pickEnd ? idx > eIdx : idx < sIdx;
+              const cls = 'day-cal-cell '
+                + (sameMonth ? '' : 'out ')
+                + (isEdge ? 'edge ' : (inRange ? 'in ' : (isHover ? 'hov ' : '')))
+                + (dis ? 'dis' : '');
+              return (
+                <span key={di} className={cls}
+                      onMouseEnter={()=>!dis && sameMonth && setHover(idx)}
+                      onMouseLeave={()=>setHover(null)}
+                      onClick={()=>!dis && sameMonth && onPickDay(d)}
+                      title={fmtDay(d)}>
+                  {d.getDate()}
+                </span>
+              );
+            })}
+          </div>
+        ))}
+      </div>
+    );
+  }
+
+  return (
+    <div className="cal-body" style={{padding:0}}>
+      {/* v5.0 (260519) 수정 — [수집 시작 / 수집 종료] 토글 버튼 제거 */}
+      <div className="week-rp-input">
+        <div className={'field ' + (!pickEnd ? 'on' : '')} onClick={()=>setPickEnd(false)}>
+          <span className="iso">{draft.start}</span>
+          <span className="cal-ico">📅</span>
+        </div>
+        <span className="arrow">→</span>
+        <div className={'field ' + (pickEnd ? 'on' : '')} onClick={()=>setPickEnd(true)}>
+          <span className="iso">{draft.end}</span>
+          <span className="cal-ico">📅</span>
+        </div>
+      </div>
+      <div className="week-cal-cols">
+        <div className="week-cal-nav">
+          <button onClick={()=>setCursor(new Date(leftY-1, leftM, 1))} title="이전 연도">«</button>
+          <button onClick={()=>setCursor(new Date(leftY, leftM-1, 1))} title="이전 달">‹</button>
+        </div>
+        <MonthCal year={leftY} month={leftM} />
+        <MonthCal year={rightY} month={rightM} />
+        <div className="week-cal-nav">
+          <button onClick={()=>setCursor(new Date(leftY, leftM+1, 1))} title="다음 달">›</button>
+          <button onClick={()=>setCursor(new Date(leftY+1, leftM, 1))} title="다음 연도">»</button>
+        </div>
+      </div>
+      <div className="week-cal-foot-hint">
+        <code>&lt;a-range-picker picker="date"&gt;</code> · 일자 셀 클릭 시 「수집 시작 / 수집 종료」에 반영됩니다 · <b>양끝 일시 모두 포함</b> (수집 시작일 00:00 ~ 수집 종료일 24:00)
+      </div>
+    </div>
+  );
+}
+
+function WeeklyPicker({ cursor, setCursor, draft, setDraft, pickEnd, setPickEnd }){
+  /* v4.0 (260515) — a-range-picker picker="week" 표준 사용성
+     · 좌·우 듀얼 캘린더 (현재월 + 다음월)
+     · 마우스 오버 시 해당 주(행) 하이라이트 · 클릭 시 주차 선택
+     · v5.0 — 주 시작 = 일요일 (Sun-Sat) · 캘린더 시작일 일괄 일요일 적용 */
+  const ps = parseWeekly(draft.start);
+  const pe = parseWeekly(draft.end);
+  const sIdx = weekIdx(draft.start);
+  const eIdx = weekIdx(draft.end);
+  const [hover, setHover] = useState(null); // { ms } — Monday timestamp of hovered week
+
+  const leftY = cursor.getFullYear(), leftM = cursor.getMonth();
+  const rightDate = new Date(leftY, leftM + 1, 1);
+  const rightY = rightDate.getFullYear(), rightM = rightDate.getMonth();
+
+  const onPickWeek = (isoY, isoW) => {
+    const wk = fmtWeekly(isoY, isoW);
+    const idx = isoWeekStartDate(isoY, isoW).getTime();
+    if(!pickEnd){
+      if(idx > eIdx) return;
+      setDraft({ start: wk, end: draft.end });
+      setPickEnd(true);
+    } else {
+      if(idx < sIdx) return;
+      setDraft({ start: draft.start, end: wk });
+    }
+  };
+
+  function MonthCal({ year, month }){
+    const firstOfMonth = new Date(year, month, 1);
+    /* v5.0 — 일요일 시작 (주 정의도 Sun-Sat) */
+    const firstSunOffset = firstOfMonth.getDay();
+    const firstSun = new Date(year, month, 1 - firstSunOffset);
+
+    /* Build 6 week rows from firstSun (each row = Sun..Sat) */
+    const weeks = [];
+    let cur = new Date(firstSun);
+    for(let wi=0; wi<6; wi++){
+      const row = { days: [], sun: new Date(cur) };
+      for(let i=0; i<7; i++){
+        row.days.push(new Date(cur));
+        cur.setDate(cur.getDate() + 1);
+      }
+      const iso = isoWeekOf(row.sun);
+      row.isoY = iso.y; row.isoW = iso.w;
+      row.idx = isoWeekStartDate(iso.y, iso.w).getTime();
+      /* Skip last row if all 7 days fall outside this month (avoid full-grey trailing row) */
+      const anyInMonth = row.days.some(d => d.getMonth() === month);
+      if(wi >= 4 && !anyInMonth) break;
+      weeks.push(row);
+    }
+    const monthLabel = ['January','February','March','April','May','June','July','August','September','October','November','December'][month];
+    return (
+      <div className="week-cal">
+        <div className="week-cal-head">{monthLabel} {year}</div>
+        <div className="week-cal-dow">
+          <span className="we">Su</span><span>Mo</span><span>Tu</span><span>We</span><span>Th</span><span>Fr</span><span className="sa">Sa</span>
+        </div>
+        {weeks.map((wk, wi) => {
+          const inRange = wk.idx >= sIdx && wk.idx <= eIdx;
+          const isEdge  = (wk.idx === sIdx) || (wk.idx === eIdx);
+          const isHover = hover && hover === wk.idx;
+          const dis = !pickEnd ? wk.idx > eIdx : wk.idx < sIdx;
+          const cls = 'week-cal-row '
+            + (isEdge ? 'edge ' : (inRange ? 'in ' : (isHover ? 'hov ' : '')))
+            + (dis ? 'dis' : '');
+          return (
+            <div key={wi} className={cls}
+                 onMouseEnter={() => !dis && setHover(wk.idx)}
+                 onMouseLeave={() => setHover(null)}
+                 onClick={() => !dis && onPickWeek(wk.isoY, wk.isoW)}
+                 title={`${wk.isoY}-W${pad2(wk.isoW)} · ${fmtDay(wk.days[0])} ~ ${fmtDay(wk.days[6])} (Sun-Sat)`}>
+              {wk.days.map((d, di) => {
+                const sameMonth = d.getMonth() === month;
+                return <span key={di} className={'week-cal-cell ' + (sameMonth ? '' : 'out')}>{d.getDate()}</span>;
+              })}
+            </div>
+          );
+        })}
+      </div>
+    );
+  }
+
+  return (
+    <div className="cal-body" style={{padding:0}}>
+      {/* v5.0 (260519) 수정 — [수집 시작 / 수집 종료] 토글 버튼 제거 */}
+      {/* 헤더 입력 (ISO 주차 ordinal 표시) */}
+      <div className="week-rp-input">
+        <div className={'field ' + (!pickEnd ? 'on' : '')} onClick={()=>setPickEnd(false)}>
+          <span className="iso">{ps.y}-{weekOrdinal(ps.w)}</span>
+          <span style={{color:'var(--ink-3)', fontSize:11}}>(W{pad2(ps.w)})</span>
+          <span className="cal-ico">📅</span>
+        </div>
+        <span className="arrow">→</span>
+        <div className={'field ' + (pickEnd ? 'on' : '')} onClick={()=>setPickEnd(true)}>
+          <span className="iso">{pe.y}-{weekOrdinal(pe.w)}</span>
+          <span style={{color:'var(--ink-3)', fontSize:11}}>(W{pad2(pe.w)})</span>
+          <span className="cal-ico">📅</span>
+        </div>
+      </div>
+      {/* 듀얼 캘린더 */}
+      <div className="week-cal-cols">
+        <div className="week-cal-nav">
+          <button onClick={()=>setCursor(new Date(leftY-1, leftM, 1))} title="이전 연도">«</button>
+          <button onClick={()=>setCursor(new Date(leftY, leftM-1, 1))} title="이전 달">‹</button>
+        </div>
+        <MonthCal year={leftY} month={leftM} />
+        <MonthCal year={rightY} month={rightM} />
+        <div className="week-cal-nav">
+          <button onClick={()=>setCursor(new Date(leftY, leftM+1, 1))} title="다음 달">›</button>
+          <button onClick={()=>setCursor(new Date(leftY+1, leftM, 1))} title="다음 연도">»</button>
+        </div>
+      </div>
+      <div className="week-cal-foot-hint">
+        <code>&lt;a-range-picker picker="week"&gt;</code> · 행에 마우스 오버 시 해당 주가 하이라이트되며, 클릭 시 「수집 시작/종료」에 반영됩니다 · <b>주 시작일 = 일요일 (Sun-Sat)</b> — v5.0 (260519) · 캘린더 시작일 일괄 적용
+      </div>
+    </div>
+  );
+}
+
+function MonthPicker({ cursor, setCursor, draft, setDraft, pickEnd, setPickEnd }){
+  const year = cursor.getFullYear();
+  const inSet = new Set(monthsBetween(draft.start, draft.end));
+  const startKey = draft.start; const endKey = draft.end;
+  const sIdx = (() => { const [y,m]=draft.start.split('-').map(Number); return y*12+(m-1); })();
+  const eIdx = (() => { const [y,m]=draft.end.split('-').map(Number);   return y*12+(m-1); })();
+  const onPickMonth = (mk) => {
+    const [y,m] = mk.split('-').map(Number);
+    const idx = y*12+(m-1);
+    if(!pickEnd){
+      if(idx > eIdx) return;
+      setDraft({ start: mk, end: draft.end });
+      setPickEnd(true);
+    } else {
+      if(idx < sIdx) return;
+      setDraft({ start: draft.start, end: mk });
+    }
+  };
+  return (
+    <div className="cal-body">
+      {/* v5.0 (260519) 수정 — [수집 시작 / 수집 종료] 토글 버튼 제거 · 월(monthly) 픽에서는 우측 드롭다운의 시작/종료 입력을 대신 사용 */}
+      <div className="cal-cols">
+        <div className="cal-month">
+          <div className="cal-month-head">
+            <button className="wf-btn sm" onClick={()=>setCursor(new Date(year-1, 0, 1))}>‹</button>
+            <span style={{flex:1, textAlign:'center', fontWeight:600}}>{year}</span>
+            <button className="wf-btn sm" onClick={()=>setCursor(new Date(year+1, 0, 1))}>›</button>
+          </div>
+          <div className="cal-mgrid">
+            {Array.from({length:12}).map((_,m)=>{
+              const mk = `${year}-${pad2(m+1)}`;
+              const inR = inSet.has(mk);
+              const edge = mk===startKey || mk===endKey;
+              const idx = year*12+m;
+              const dis = !pickEnd ? idx > eIdx : idx < sIdx;
+              return (
+                <span key={m} className={'cal-mcell ' + (inR?'in ':'') + (edge?'edge ':'') + (dis?'disabled':'')} onClick={()=>!dis && onPickMonth(mk)}>
+                  {m+1}<span className="cal-mlbl">{['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'][m]}</span>
+                </span>
+              );
+            })}
+          </div>
+        </div>
+        <div className="cal-side">
+          <div className="cal-side-row dd-row">
+            <span className="cal-side-lbl" style={{width:50, flex:"0 0 50px"}}>수집 시작</span>
+            <YearMonthDD ym={draft.start} setCursor={setCursor}
+              onChange={(ny)=>{ setDraft(d=>({...d, start: ny})); setPickEnd(false); }} />
+          </div>
+          <div className="cal-side-row dd-row">
+            <span className="cal-side-lbl" style={{width:50, flex:"0 0 50px"}}>수집 종료</span>
+            <YearMonthDD ym={draft.end} setCursor={setCursor}
+              onChange={(ny)=>{ setDraft(d=>({...d, end: ny})); setPickEnd(true); }} />
+          </div>
+          <div className="pick-mode-hint">· 「수집 시작/수집 종료」 토글 → 캘린더 셀 클릭 시 해당 항목에 반영<br/>· <b>드롭다운은 조회성</b> · 잘못된 순서 입력 시 하단 유효성 안내 표시</div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+const STATE_METRIC_IDS = new Set(['m-life', 'm-active', 'm-active-rate']);
+/* v2.0 — 정수로 표기해야 하는 지표 (개수 단위) */
+const INT_METRIC_IDS = new Set(['m-vol-cnt', 'm-vcpu']);
+const METER_NO_MIN_IDS = new Set(['m-vol-cnt', 'm-vol-size', 'm-vcpu', 'm-vmem']);
+/* v2.0 재편 — «일반 지표» 탭 (인스턴스 상태 + 미터링 용량). 그 외 전부는 «성능 지표» 탭 */
+const GENERAL_METRIC_IDS = new Set(['m-life','m-active','m-active-rate','m-vol-cnt','m-vol-size','m-vcpu','m-vmem']);
+const GENERAL_ORDER = ['m-life','m-active','m-active-rate','m-vol-cnt','m-vol-size','m-vcpu','m-vmem'];
+/* v5.0 (260519) — median(중위값) 4번째 수집 항목 추가. 모든 성능 지표는 min/avg/max/median 4계열 */
+const aggColsFor = (m) => {
+  if (STATE_METRIC_IDS.has(m)) return ['sum'];                  // 상태 — 누적값 단일 컬럼
+  if (METER_NO_MIN_IDS.has(m)) return ['avg', 'max', 'median']; // 미터링 용량 — min 제외 + median
+  return ['min', 'avg', 'max', 'median'];                       // 성능 — 4계열 전부 (v5.0)
+};
+/* 차트 시리즈별 색상 매핑 (median = 점선) */
+const AGG_STYLE = {
+  min:    { dash: '2 3',     op: .50, w: 1.1, label: 'min' },
+  max:    { dash: '4 2',     op: .85, w: 1.1, label: 'max' },
+  avg:    { dash: null,      op: 1.0, w: 1.8, label: 'avg' },
+  median: { dash: '1 2.5',   op: .80, w: 1.4, label: 'median' },
+};
+
+function tickLabel(stepId, range, idx){
+  if(stepId==='hourly'){
+    const [sd, sh] = range.start.split(' ');
+    const dt = new Date(parseDay(sd).getTime() + ((+sh)+idx)*3600000);
+    return `${dt.getFullYear()}-${pad2(dt.getMonth()+1)}-${pad2(dt.getDate())} ${pad2(dt.getHours())}시`;
+  }
+  if(stepId==='daily'){
+    const dt = new Date(parseDay(range.start).getTime() + idx*86400000);
+    return fmtDay(dt);
+  }
+  if(stepId==='weekly'){
+    const p = parseWeekly(range.start);
+    const mon = isoWeekStartDate(p.y, p.w);
+    mon.setDate(mon.getDate() + idx*7);
+    const iso = isoWeekOf(mon);
+    return `${iso.y}-W${pad2(iso.w)}`;
+  }
+  const [sy,sm] = range.start.split('-').map(Number);
+  const m0 = sy*12 + (sm-1) + idx;
+  const y = Math.floor(m0/12); const m = (m0%12)+1;
+  return `${y}-${pad2(m)}`;
+}
+function tickColumnLabel(stepId){
+  if(stepId==='hourly')  return '수집 기준 일시 (YYYY-MM-DD HH시)';
+  if(stepId==='daily')   return '수집 기준 일자 (YYYY-MM-DD)';
+  if(stepId==='weekly')  return '수집 기준 주차 (YYYY-Www · Sun-Sat)';
+  return '수집 기준 월 (YYYY-MM)';
+}
+
+function DataTable({ selectedTargets, selectedMetricIds, metricMap, tableData, stepObj, dateRange, onCsv, category }) {
+  /* 같은 그룹(CPU/메모리/네트워크/...) 컬럼이 연속되도록 정렬 → lvl0 그룹 span 분리 방지 */
+  const groupOrder = useMemo(() => {
+    const out = {}; let idx = 0;
+    (METRIC_TREE[category] || []).forEach(g => { out[g.name] = idx++; });
+    return out;
+  }, [category]);
+  /* v5.0 (260519) 수정 — 「일반 지표」 탭 일괄 제거 (별도 히스토리 메뉴 존재).
+     성능 지표만 단일 뷰로 표출. tab 상태/일반지표 useMemo/useEffect 모두 제거. */
+  const perfMetrics = useMemo(() => {
+    return selectedMetricIds.filter(m => !GENERAL_METRIC_IDS.has(m)).sort((a, b) => {
+      const ga = groupOrder[METRIC_GROUP[a]] ?? 999;
+      const gb = groupOrder[METRIC_GROUP[b]] ?? 999;
+      return ga - gb;
+    });
+  }, [selectedMetricIds.join(','), groupOrder]);
+  const shownMetrics = perfMetrics;
+  const fmt = (v, m) => {
+    if (!Number.isFinite(v)) return '-';
+    if (m && INT_METRIC_IDS.has(m)) return String(Math.round(v));
+    return v.toFixed(2);
+  };
+  /* v5.0 (260519) — 데이터 테이블 행 조회 개수 선택형 (default 20 / 50 / 100) */
+  const PAGE_OPTS = [20, 50, 100];
+  const [pageSize, setPageSize] = useState(20);
+  /* RAW 샘플: 각 (tick × target) → 한 행. 시간 내림차순(최신 위) · target 오름차순. */
+  const points = effectivePoints(stepObj.id, dateRange);
+  const allRows = useMemo(() => {
+    const out = [];
+    for(let i = points - 1; i >= 0; i--){
+      const ts = tickLabel(stepObj.id, dateRange, i);
+      selectedTargets.forEach(t => {
+        const cells = {};
+        shownMetrics.forEach(m => {
+          /* 시드 — target/metric을 전체 문자열로 해싱해 m-life vs m-active 가 절대 같은 값이 나오지 않게 한다 */
+          let th = 5381; for(let k=0;k<t.id.length;k++) th = ((th<<5) + th + t.id.charCodeAt(k)) >>> 0;
+          let mh = 5381; for(let k=0;k<m.length; k++) mh = ((mh<<5) + mh + m.charCodeAt(k)) >>> 0;
+          const seed = (th * 41 + mh * 13 + i * 131 + stepObj.id.charCodeAt(0) * 2) >>> 0;
+          const r = seedRand(seed);
+          let avg, mn, mx;
+          if (m.includes('rate') || m.includes('cpu') || m.includes('cont')) {
+            avg = +(r()*60+20).toFixed(2);
+            mn = +(Math.max(0, avg - r()*15)).toFixed(2);
+            mx = +(Math.min(100, avg + r()*30)).toFixed(2);
+          } else if (m.includes('mem') && !m.includes('m-')) {
+            avg = +(r()*15+8).toFixed(2); mn = +(avg-r()*3).toFixed(2); mx = +(avg+r()*4).toFixed(2);
+          } else if (m.includes('bw') || m.includes('tp')) {
+            avg = +(r()*400+100).toFixed(2); mn = +(avg-r()*60).toFixed(2); mx = +(avg+r()*120).toFixed(2);
+          } else if (m.includes('err') || m.includes('drop')) {
+            avg = +(r()*0.5).toFixed(2); mn = 0; mx = +(avg+r()*0.6).toFixed(2);
+          } else if (m==='m-life' || m==='m-active') {
+            avg = +(r()*22+1).toFixed(2);
+            mn  = +(Math.max(0, avg - r()*3)).toFixed(2);
+            mx  = +(Math.min(24, avg + r()*3)).toFixed(2);
+          } else if (m==='m-active-rate') {
+            avg = +(r()*70+25).toFixed(2); mn = +(Math.max(0,avg-r()*15)).toFixed(2); mx = +(Math.min(100,avg+r()*15)).toFixed(2);
+          } else if (m==='m-vol-cnt') {
+            avg = Math.round(r()*8+1);
+            mn  = Math.max(0, avg - Math.round(r()*2));
+            mx  = avg + Math.round(r()*3);
+          } else if (m==='m-vol-size') {
+            avg = +(r()*500+50).toFixed(2); mn = +(avg-r()*40).toFixed(2); mx = +(avg+r()*80).toFixed(2);
+          } else if (m==='m-vcpu') {
+            avg = Math.round(r()*16+2);
+            mn  = avg;
+            mx  = avg + Math.round(r()*4);
+          } else if (m==='m-vmem') {
+            avg = +(r()*64+4).toFixed(2); mn = +(avg-r()*4).toFixed(2); mx = +(avg+r()*8).toFixed(2);
+          } else {
+            avg = +(r()*100).toFixed(2); mn = +(Math.max(0,avg-r()*20)).toFixed(2); mx = +(avg+r()*30).toFixed(2);
+          }
+          /* v5.0 — median: min~max 사이, avg와는 약간 어긋남 (정수 지표는 정수로) */
+          let med;
+          if (INT_METRIC_IDS.has(m)) {
+            med = Math.max(mn, Math.min(mx, Math.round(avg + (r()-0.5) * 2)));
+          } else {
+            med = +Math.max(mn, Math.min(mx, avg + (r()-0.5) * Math.max(0.5, (mx - mn) * 0.35))).toFixed(2);
+          }
+          cells[m] = { min: mn, avg, max: mx, median: med };
+        });
+        out.push({ tick: ts, tickIdx: i, target: t, cells });
+      });
+    }
+    return out;
+  }, [selectedTargets.map(t=>t.id).join(','), shownMetrics.join(','), stepObj.id, dateRange.start, dateRange.end, points]);
+  const totalRows = allRows.length;
+  const rows = allRows.slice(0, pageSize);
+
+  const closedSummary = (
+    <><b style={{color:'var(--ink)'}}>{totalRows.toLocaleString()}</b> rows (RAW 샘플) — {points} tick × {selectedTargets.length} targets × {selectedMetricIds.length} metrics. 펼쳐서 표를 확인하세요.</>
+  );
+  return (
+    <Accordion
+      title="④ 데이터 테이블"
+      sub={'RAW 샘플 — 행 = 수집 기준 시점 × 대상 · ' + (totalRows > pageSize ? `상위 ${pageSize}행 표시 (행 수 선택 가능)` : '전체 표시')}
+      defaultOpen={false}
+      badge={<span className="wf-tag">{totalRows.toLocaleString()} rows · {pageSize}/page</span>}
+      summaryWhenClosed={closedSummary}
+      footer={
+        <div className="csv-bar" style={{alignItems:'flex-start'}}>
+          <div className="hint" style={{flex:1}}>
+            CSV 다운로드 — 행: <b>수집 기준 시점 × 대상</b> / 열: <b>기준시간·대상명·그룹·(지표 × min/max/avg)</b> ·
+            <span style={{color:'var(--ink-3)'}}> 파일명 <code>aggregation_report_{baseDateOf(dateRange.end).replaceAll('-','').replaceAll(' ','_')}_target.csv</code> · UTF-8 BOM · 단일 파일 100,000행 한계</span>
+            <div style={{marginTop:4, color:'var(--ink-2)', fontSize:11.5, lineHeight:1.55, paddingTop:4, borderTop:'1px dashed var(--line)'}}>
+              <b style={{color:'var(--ink)'}}>※ 100,000행 초과 시</b> 파일을 자동 분할 다운로드합니다 — 파일명 뒤에 <code>(1/N)</code> · <code>(2/N)</code> … 형식으로 전체 분할 수 중 몇 번째인지 표기합니다.
+              <div style={{marginTop:2, color:'var(--ink-3)', fontSize:10.5}}>
+                예) 250,000행 → <code>aggregation_report_{baseDateOf(dateRange.end).replaceAll('-','').replaceAll(' ','_')}_target (1/3).csv</code>, <code>… (2/3).csv</code>, <code>… (3/3).csv</code> 3개 파일로 분할
+              </div>
+            </div>
+            <div style={{marginTop:6, color:'#854f0b', fontSize:11}}>※ 기간 요약 뷰는 <b>고도화 단계로 이관</b> — 본 화면은 RAW 샘플 표출</div>
+          </div>
+          <button className="wf-btn primary" onClick={onCsv} style={{alignSelf:'center'}}>↓ CSV 다운로드</button>
+        </div>
+      }>
+      <div className="table-tabs">
+        {/* v5.0 (260519) 수정 — 「일반 지표」 탭 일괄 제거: 성능 지표 단일 헤더로 전환 */}
+        <span style={{padding: '9px 14px', fontSize: 12.5, fontWeight: 600, display: 'inline-flex', alignItems: 'center', gap: 6, color:'var(--ink)', background:'#fff', border:'1.5px solid var(--ink)', borderBottomColor:'#fff', position:'relative', top:'1.5px'}}>
+          성능 지표 <span style={{fontSize:10.5, padding:'1px 6px', border:'1px solid var(--ink)', borderRadius:999, background:'var(--ink)', color:'#fff', fontWeight:600}}>{shownMetrics.length}</span>
+        </span>
+        <span className="table-tab-note">
+          ※ 성능 지표는 <b style={{color:'var(--ink)'}}>min / avg / max / median</b> 4계열 동시 표출 <span style={{marginLeft:4, fontSize:9, padding:'1px 4px', background:'var(--hi)', border:'1px solid var(--ink)', fontWeight:600, letterSpacing:'.04em'}}>v5.0</span>
+        </span>
+        {/* v5.0 — 행 조회 개수 선택 (default 20 · 50 · 100) */}
+        <span style={{marginLeft: 10, display:'inline-flex', alignItems:'center', gap:6, alignSelf:'center', fontSize:11, color:'var(--ink-3)', paddingRight: 6}}>
+          <span>행 조회 개수</span>
+          <select className="wf-select" style={{padding:'3px 22px 3px 8px', fontSize:11.5}} value={pageSize} onChange={e=>setPageSize(+e.target.value)} title="한 화면에 표시할 행 수 (default 20)">
+            {PAGE_OPTS.map(n => <option key={n} value={n}>{n}행</option>)}
+          </select>
+          <span style={{color:'var(--ink-2)'}}>/ <b style={{color:'var(--ink)'}}>{totalRows.toLocaleString()}</b>행</span>
+        </span>
+      </div>
+      {/* v5.0 (260519) 수정 — 「일반 지표」 탭 제거에 따라 인스턴스 상태 warning 일괄 제거 */}
+      <div className="table-scroll vscroll">
+        {selectedTargets.length === 0 ? (
+          <div style={{padding: 30, textAlign:'center', color:'var(--ink-3)'}}>▢ 대상을 선택하면 표가 채워집니다.</div>
+        ) : selectedMetricIds.length === 0 ? (
+          <div style={{padding: 30, textAlign:'center', color:'var(--ink-3)'}}>▢ 지표를 1개 이상 선택하세요.</div>
+        ) : shownMetrics.length === 0 ? (
+          <div style={{padding: 30, textAlign:'center', color:'var(--ink-3)'}}>
+            ▢ ② 지표 선택에서 CPU·메모리·네트워크·디스크 지표를 1개 이상 선택하세요.
+          </div>
+        ) : (
+          <table className="data-table">
+            <thead>
+            {(() => {
+              /* v5.0 (260519) 수정 — 「일반 지표」 탭 제거: 3계층 헤더 고정 */
+              const rowSpanN = 3;
+              const spans = [];
+              shownMetrics.forEach(m => {
+                const grp = METRIC_GROUP[m] || '—';
+                const cols = aggColsFor(m).length;
+                const last = spans[spans.length-1];
+                if (last && last.name === grp) last.cols += cols;
+                else spans.push({ name: grp, cols });
+              });
+              return (
+                  <tr className="lvl0">
+                    <th rowSpan={rowSpanN} className="hdr-frozen lvl0 lvl-anchor" style={{verticalAlign:'middle', minWidth: 156}}>{tickColumnLabel(stepObj.id).split(' (')[0]}
+                      <div style={{fontSize:10, color:'var(--ink-3)', fontWeight:400, textTransform:'none', letterSpacing:0}}>{tickColumnLabel(stepObj.id).match(/\((.+)\)/)?.[1] || ''} · step = {stepObj?.label || '—'}</div>
+                    </th>
+                    <th rowSpan={rowSpanN} className="hdr-frozen lvl0 lvl-anchor" style={{verticalAlign:'middle'}}>대상명</th>
+                    <th rowSpan={rowSpanN} className="hdr-frozen lvl0 lvl-anchor" style={{verticalAlign:'middle'}}>그룹</th>
+                    {spans.map((s, i) => (
+                      <th key={i} colSpan={s.cols} className="lvl0" style={{textAlign:'center', borderLeft:'1.5px solid var(--ink)', background:'var(--paper-2)'}}>{s.name}</th>
+                    ))}
+                  </tr>
+              );
+            })()}
+              <tr className="lvl1">
+                {shownMetrics.map((m, mi) => (
+                  <th key={m} colSpan={aggColsFor(m).length} className="lvl1" style={{textAlign:'center', borderLeft: '1.5px solid var(--ink)'}}>
+                    <div style={{display:'flex', alignItems:'center', justifyContent:'center', gap:4, lineHeight:1.3}}>
+                      <span>{metricMap[m]?.label || m}</span>
+                      <span style={{fontSize:10, color:'var(--ink-3)', fontWeight:400}}>({METRIC_UNITS[m] || '—'})</span>
+                      <span className="info-i" style={{marginLeft:2}}>?</span>
+                    </div>
+                  </th>
+                ))}
+              </tr>
+              <tr className="lvl2">
+                {shownMetrics.map(m => (
+                  <React.Fragment key={m}>
+                    {aggColsFor(m).map((col, ci) => (
+                      <th key={col} className="lvl2" style={{textAlign:'right', borderLeft: ci === 0 ? '1.5px solid var(--ink)' : undefined}}>{col}</th>
+                    ))}
+                  </React.Fragment>
+                ))}
+              </tr>
+            </thead>
+            <tbody>
+              {rows.map((row, ri) => {
+                const prev = ri > 0 ? rows[ri-1] : null;
+                const tickChanged = !prev || prev.tick !== row.tick;
+                return (
+                  <tr key={row.tick + '|' + row.target.id} style={tickChanged ? {borderTop: '1px solid var(--ink)'} : null}>
+                    <td style={{color:'var(--ink-2)', whiteSpace:'nowrap'}}>
+                      {tickChanged ? <b style={{color:'var(--ink)', fontFeatureSettings:'"tnum"'}}>{row.tick}</b> : <span style={{color:'var(--ink-3)'}}>↑ {row.tick}</span>}
+                    </td>
+                    <td><b>{row.target.name}</b></td>
+                    <td style={{color:'var(--ink-3)'}}>{row.target.group}</td>
+                    {shownMetrics.map(m => {
+                      const cell = row.cells[m] || { min:0, avg:0, max:0, median:0 };
+                      const cols = aggColsFor(m);
+                      return (
+                        <React.Fragment key={m}>
+                          {cols.map((col, ci) => (
+                            <td key={col} className={'num ' + col} style={{textAlign:'right', borderLeft: ci === 0 ? '1.5px solid var(--ink)' : undefined}}>{fmt(cell[col], m)}</td>
+                          ))}
+                        </React.Fragment>
+                      );
+                    })}
+                  </tr>
+                );
+              })}
+              {totalRows > pageSize && (
+                <tr>
+                  <td colSpan={3 + shownMetrics.reduce((a,m)=>a+aggColsFor(m).length,0)} style={{padding: '10px 14px', textAlign:'center', color:'var(--ink-3)', fontSize:11, background:'#fbfaf6', borderTop:'1.5px dashed var(--ink-3)'}}>
+                    … 표시 <b style={{color:'var(--ink)'}}>{pageSize.toLocaleString()}</b>행 / 전체 <b style={{color:'var(--ink)'}}>{totalRows.toLocaleString()}</b>행 — 행 수 셀렉터에서 <b style={{color:'var(--ink-2)'}}>최대 100행</b>까지 늘리거나, CSV로 내려받으세요
+                  </td>
+                </tr>
+              )}
+            </tbody>
+          </table>
+        )}
+      </div>
+    </Accordion>
+  );
+}
+
+/* BarChart list (v2.0 미터링 지표 전용) — 대상별 수평 막대로 누적 값을 표시. 시계열 아닌 하나의 대표값(궁극적 누적 또는 avg)을 비교. */
+function BarList({ targets, axis, getValue, unitLabel, sort=true }) {
+  const rows = useMemo(() => {
+    const arr = targets.map((t,i) => ({ t, v: getValue(t, i) || 0 }));
+    if(sort) arr.sort((a,b) => b.v - a.v);
+    return arr;
+  }, [targets.map(t=>t.id).join(','), sort]);
+  if(rows.length===0) return null;
+  const maxV = Math.max(axis.hi, ...rows.map(r=>r.v), 1);
+  return (
+    <div style={{display:'flex', flexDirection:'column', gap:5, padding:'4px 2px', maxHeight: 240, overflowY:'auto'}}>
+      {rows.map((r,i) => {
+        const pct = Math.max(2, (r.v / maxV) * 100);
+        const top1 = i === 0;
+        return (
+          <div key={r.t.id} style={{display:'grid', gridTemplateColumns:'118px 1fr 64px', gap:8, alignItems:'center', fontSize:11.5}}>
+            <span style={{whiteSpace:'nowrap', overflow:'hidden', textOverflow:'ellipsis', color: top1?'var(--ink)':'var(--ink-2)', fontWeight: top1?700:500}} title={r.t.name + ' · ' + r.t.group}>
+              <span style={{color: top1?'#a82323':'var(--ink-3)', marginRight:4, fontFamily:'inherit'}}>{String(i+1).padStart(2,'0')}.</span>
+              {r.t.name}
+            </span>
+            <span style={{position:'relative', height:18, background:'var(--paper-2)', border:'1px solid var(--line)'}}>
+              <span style={{position:'absolute', inset:'0 auto 0 0', width: pct+'%', background: top1?'var(--ink)':SERIES_COLORS[i%SERIES_COLORS.length], opacity: top1?1:.75}}></span>
+            </span>
+            <span className="num" style={{textAlign:'right', fontFeatureSettings:'"tnum"', fontWeight: top1?700:500}}>
+              {r.v.toFixed(unitLabel==='%'?1:0)}<span style={{color:'var(--ink-3)', marginLeft:2, fontSize:10}}>{unitLabel}</span>
+            </span>
+          </div>
+        );
+      })}
+    </div>
+  );
+}
+
+function LineSvg({ width, height, series, axis, stepObj, aggToggles, dateRange, points: pointsProp, unitLabel }) {
+  const padL = 44, padR = 12, padT = 14, padB = 22;
+  const innerW = width - padL - padR;
+  const innerH = height - padT - padB;
+  const points = pointsProp || stepObj.points;
+  const xFor = i => padL + (points === 1 ? innerW/2 : (i / (points - 1)) * innerW);
+  const yFor = v => padT + innerH - ((v - axis.lo) / (axis.hi - axis.lo || 1)) * innerH;
+  const yTicks = 4;
+  const ticks = Array.from({length: yTicks + 1}, (_, i) => axis.lo + (axis.hi - axis.lo) * (i / yTicks));
+  /* X축 라벨 간격 — step별 예상 라벨 폭에 맞춰 stride 산정 (겹침 방지) */
+  const labelPxByStep = { hourly: 22, daily: 44, weekly: 46, monthly: 44 };
+  const labelW = labelPxByStep[stepObj.id] || 42;
+  const labelStride = Math.max(1, Math.ceil((points * labelW) / Math.max(80, innerW)));
+
+  /* v5.0 (260519) 수정 — 라인 호버 시 레전드별 다값(Max/Median/Avg/Min) CSV 툴팁 */
+  const [hoverIdx, setHoverIdx] = useState(null);
+  const svgRef = React.useRef(null);
+  const onMove = (e) => {
+    const node = svgRef.current; if (!node) return;
+    const r = node.getBoundingClientRect();
+    const xRel = e.clientX - r.left;
+    if (xRel < padL || xRel > padL + innerW) { setHoverIdx(null); return; }
+    const t = points <= 1 ? 0 : (xRel - padL) / innerW;
+    const idx = Math.max(0, Math.min(points - 1, Math.round(t * (points - 1))));
+    setHoverIdx(idx);
+  };
+  const onLeave = () => setHoverIdx(null);
+  const fmtVal = (v) => {
+    if (!Number.isFinite(v)) return '-';
+    if (Math.abs(v) >= 1000) return v.toFixed(0);
+    return (Math.round(v * 10) / 10).toFixed(1);
+  };
+  const unitSuffix = (unitLabel === '%') ? '%' : (unitLabel ? ` ${unitLabel}` : '');
+  /* 툴팁 박스 placement — 호버 위치가 좌측이면 우측, 우측이면 좌측에 표시 */
+  const tipW = Math.min(360, Math.max(220, innerW - 16));
+  const tipH = Math.min(160, 22 + Math.max(1, series.length) * 16);
+  const tipOnRight = hoverIdx !== null && xFor(hoverIdx) < (padL + innerW / 2);
+  const tipX = tipOnRight ? (padL + innerW - tipW - 4) : (padL + 4);
+  const tipY = padT + 2;
+
+  return (
+    <svg ref={svgRef} width={width} height={height} style={{display:'block', overflow:'visible'}} onMouseMove={onMove} onMouseLeave={onLeave}>
+      {ticks.map((t, i) => (
+        <g key={i}>
+          <line className="grid-line" x1={padL} x2={padL+innerW} y1={yFor(t)} y2={yFor(t)} />
+          <text className="yaxis" x={padL-6} y={yFor(t)+3} textAnchor="end">{Number(t.toFixed(t<10?2:0))}</text>
+        </g>
+      ))}
+      <line className="axis-line" x1={padL} x2={padL+innerW} y1={padT+innerH} y2={padT+innerH} />
+      {unitLabel && <text className="yaxis" x={padL-4} y={padT-4} textAnchor="end" style={{fontWeight:600, fill:'var(--ink-2)', fontSize:10}}>{unitLabel}</text>}
+      {/* 호버 캡처용 투명 박스 (라인 사이 빈공간에서도 hover 감지) */}
+      <rect x={padL} y={padT} width={innerW} height={innerH} fill="transparent" />
+      {Array.from({length: points}).map((_, i) => (
+        (i%labelStride===0 || i===points-1) && (
+          <text key={i} className="xaxis" x={xFor(i)} y={padT+innerH+14} textAnchor="middle">{stepObj.xfmt(i, dateRange)}</text>
+        )
+      ))}
+      {series.map((s, si) => {
+        const color = s.color;
+        const variants = [];
+        ['min','max','median','avg'].forEach(k => {
+          if (aggToggles[k]) {
+            const st = AGG_STYLE[k];
+            variants.push({ k, dash: st.dash, op: st.op, w: st.w });
+          }
+        });
+        return (
+          <g key={si}>
+            {variants.map(v => {
+              const d = s.data.map((p, i) => `${i===0?'M':'L'} ${xFor(i)} ${yFor(p[v.k])}`).join(' ');
+              return (
+                <g key={v.k}>
+                  <path d={d} stroke={color} strokeWidth={v.w} fill="none" strokeDasharray={v.dash||''} opacity={v.op} />
+                  {v.k === 'avg' && points <= 40 && s.data.map((p,i)=>(
+                    <circle key={i} cx={xFor(i)} cy={yFor(p.avg)} r={2.4} fill={color} opacity={v.op}/>
+                  ))}
+                </g>
+              );
+            })}
+          </g>
+        );
+      })}
+      {/* 호버 가이드 + 다값 툴팁 */}
+      {hoverIdx !== null && series.length > 0 && (
+        <g pointerEvents="none">
+          <line x1={xFor(hoverIdx)} x2={xFor(hoverIdx)} y1={padT} y2={padT+innerH} stroke="#1a1a1a" strokeOpacity={.4} strokeWidth={1} strokeDasharray="3 3"/>
+          {series.map((s, si) => {
+            const p = s.data[hoverIdx]; if (!p) return null;
+            return (
+              <g key={si}>
+                {aggToggles.avg && <circle cx={xFor(hoverIdx)} cy={yFor(p.avg)} r={4} fill={s.color} stroke="#fff" strokeWidth={1.5}/>}
+                {aggToggles.max && <circle cx={xFor(hoverIdx)} cy={yFor(p.max)} r={2.5} fill={s.color} stroke="#fff" strokeWidth={1}/>}
+                {aggToggles.median && <circle cx={xFor(hoverIdx)} cy={yFor(p.median)} r={2.5} fill={s.color} stroke="#fff" strokeWidth={1}/>}
+                {aggToggles.min && <circle cx={xFor(hoverIdx)} cy={yFor(p.min)} r={2.5} fill={s.color} stroke="#fff" strokeWidth={1}/>}
+              </g>
+            );
+          })}
+          <foreignObject x={tipX} y={tipY} width={tipW} height={tipH}>
+            <div xmlns="http://www.w3.org/1999/xhtml" style={{fontFamily:'inherit', fontSize:10.5, background:'rgba(255,255,255,0.97)', border:'1px solid #1a1a1a', boxShadow:'2px 2px 0 rgba(0,0,0,0.08)', padding:'5px 7px', lineHeight:1.45}}>
+              <div style={{fontSize:9.5, color:'#666', marginBottom:3, letterSpacing:'.04em', textTransform:'uppercase', borderBottom:'1px dashed #d0d0d0', paddingBottom:2}}>
+                x = <b style={{color:'#1a1a1a', textTransform:'none', letterSpacing:0}}>{stepObj.xfmt(hoverIdx, dateRange)}</b>
+              </div>
+              {series.map((s, si) => {
+                const p = s.data[hoverIdx];
+                if (!p) return null;
+                return (
+                  <div key={si} style={{display:'flex', alignItems:'center', gap:5, whiteSpace:'nowrap', overflow:'hidden', textOverflow:'ellipsis', padding:'1px 0'}}>
+                    <span style={{width:10, height:2, background:s.color, display:'inline-block', flexShrink:0}}></span>
+                    <b style={{color:'#1a1a1a', flexShrink:0}}>{s.label}</b>
+                    <span style={{color:'#999', flexShrink:0}}>—</span>
+                    <span style={{color:'#333', fontVariantNumeric:'tabular-nums'}}>Max: {fmtVal(p.max)}{unitSuffix}, Median: {fmtVal(p.median)}{unitSuffix}, Avg: {fmtVal(p.avg)}{unitSuffix}, Min: {fmtVal(p.min)}{unitSuffix}</span>
+                  </div>
+                );
+              })}
+            </div>
+          </foreignObject>
+        </g>
+      )}
+    </svg>
+  );
+}
+
+function ChartCard({ group, stepObj, selectedTargets, forceNoData, dateRange, onZoom }) {
+  /* v5.0 (260519) — 차트 타입 라인으로 통일 (Area 미사용 제거). BarList는 미터링 그룹용이었으나 분리됨. */
+  const chartType = 'line';
+  /* v5.0 (260519) 수정 — default 표출 라인 = avg 만 ON (max/min/median 은 사용자 토글로 옥션) */
+  const [aggToggles, setAggToggles] = useState({ avg: true, max: false, min: false, median: false });
+  const points = effectivePoints(stepObj.id, dateRange);
+  const series = useMemo(() => {
+    if (forceNoData) return [];
+    if (selectedTargets.length === 0) return [];
+    return selectedTargets.slice(0, 8).map((t, i) => {
+      const seed = (t.id.charCodeAt(t.id.length-1) * 37 + group.id.charCodeAt(0) * 11 + i * 7 + stepObj.id.charCodeAt(0)*5) >>> 0;
+      let base, amp, ceil=100;
+      if (group.unit === '%') { base = 35 + (i*7)%30; amp = 25; ceil = 100; }
+      else if (group.unit.includes('GB')) { base = 18 + (i*4)%20; amp = 10; ceil = 64; }
+      else if (group.unit.includes('Mbps')) { base = 200 + (i*45)%200; amp = 150; ceil = 1000; }
+      else if (group.unit.includes('pkt')) { base = 1200 + (i*200)%2000; amp = 800; ceil = 8000; }
+      else if (group.unit === 'h') { base = 0.4 + (i*0.15)%0.6; amp = 0.4; ceil = 1; }
+      else if (group.unit.includes('cps')) { base = 60 + (i*8)%40; amp = 30; ceil = 300; }
+      else if (group.unit === 'hour') { base = 80 + (i*40)%500; amp = 120; ceil = 720; }
+      else if (group.unit === 'ea')   { base = 2  + (i*2)%6;   amp = 2;   ceil = 16; }
+      else if (group.unit === 'core') { base = 4  + (i*2)%12;  amp = 4;   ceil = 64; }
+      else { base = 30 + (i*5)%30; amp = 20; ceil = 100; }
+      return { label: t.name, color: SERIES_COLORS[i % SERIES_COLORS.length], data: genSeries(seed, points, base, amp, 0, ceil) };
+    });
+  }, [group.id, stepObj.id, selectedTargets.map(t=>t.id).join(','), points]);
+  const allValues = useMemo(() => {
+    let max = 0, min = Infinity;
+    series.forEach(s => s.data.forEach(d => { max = Math.max(max, d.max); min = Math.min(min, d.min); }));
+    return { max, min };
+  }, [series]);
+  const axis = metricAxis(group.id, allValues, group.unit);
+
+  return (
+    <div className="chart-card">
+      <div className="chart-head">
+        <span className="chart-title">
+          {group.parentName && <span style={{fontSize:10.5, color:'var(--ink-3)', fontWeight:500, marginRight:4}}>{group.parentName} ·</span>}
+          {group.title}
+          {group.isNew && <span style={{marginLeft:4, fontSize:9, padding:'1px 5px', background:'var(--hi)', border:'1px solid var(--ink)', fontWeight:700, letterSpacing:'.06em'}}>NEW</span>}
+          {/* v5.0 (260519) 수정 — [LINE] 차트 타입 배지 제거 (디자인시 명칭 변경 가능성) */}
+          {group.members.map((m, i) => (
+            <span key={i} className="info-i" title={"지표 산정 근거 — " + m}>?</span>
+          ))}
+          <span style={{fontSize:10, color:'var(--ink-3)', fontWeight: 400, marginLeft: 4}}>{group.unit}</span>
+        </span>
+        <div className="agg-toggles" title="min / avg / max / median 표출 토글 (v5.0)">
+          {['avg','max','min','median'].map(k => (
+            <label key={k} className={aggToggles[k]?'on':''} onClick={(e)=>{ e.preventDefault(); setAggToggles(s=>({...s, [k]: !s[k]})); }}>
+              <span className={'wf-check ' + (aggToggles[k]?'on':'')} style={{width:10, height:10, borderColor: aggToggles[k]?'#fff':'var(--ink)'}}></span>
+              {k}
+            </label>
+          ))}
+        </div>
+        <div className="chart-actions">
+          <button className="zoom-btn" title="차트 확대" onClick={()=>onZoom && onZoom({ group, series, axis, aggToggles, chartType })}>⌬ 확대</button>
+        </div>
+      </div>
+      {group.note && <div className="chart-note">⚠ {group.note}</div>}
+      <div className="chart-body">
+        {forceNoData ? (
+          <div className="wf-stripe" style={{height: 180, display:'flex', flexDirection:'column', alignItems:'center', justifyContent:'center', gap:6, color:'var(--ink-3)', border:'1px dashed var(--line)', background:'repeating-linear-gradient(45deg, transparent 0 6px, #f3f3f3 6px 12px)'}}>
+            <span style={{fontSize:13, fontWeight:600, color:'var(--ink-2)'}}>No Data</span>
+            <span style={{fontSize:11}}>선택한 기간·대상에 해당하는 데이터가 없습니다</span>
+          </div>
+        ) : selectedTargets.length === 0 ? (
+          <div className="wf-stripe" style={{height: 160, display:'flex', alignItems:'center', justifyContent:'center', color:'var(--ink-3)', border:'1px dashed var(--line)'}}>대상 미선택</div>
+        ) : (
+          <LineSvg width={620} height={180} series={series} axis={axis} stepObj={stepObj} aggToggles={aggToggles} dateRange={dateRange} points={points} unitLabel={group.unit} />
+        )}
+      </div>
+      <div className="chart-legend">
+        {series.length === 0
+          ? <span style={{color:'var(--ink-3)'}}>(대상 선택 시 범례 표출)</span>
+          : <>
+              {series.map((s, i) => (
+                <span key={i}><span className="lgnd-sw" style={{background: s.color}}></span>{s.label}</span>
+              ))}
+              <span style={{marginLeft:'auto', color:'var(--ink-3)', fontSize:10.5, display:'flex', gap:10, alignItems:'center'}}>
+                <span><span style={{display:'inline-block', width:14, height:0, borderTop:'1.8px solid var(--ink-2)', verticalAlign:'middle', marginRight:3}}></span>avg</span>
+                <span><span style={{display:'inline-block', width:14, height:0, borderTop:'1.1px dashed var(--ink-2)', verticalAlign:'middle', marginRight:3}}></span>max</span>
+                <span><span style={{display:'inline-block', width:14, height:0, borderTop:'1.1px dotted var(--ink-2)', verticalAlign:'middle', marginRight:3}}></span>min</span>
+                <span><span style={{display:'inline-block', width:14, height:0, borderTop:'1.4px dashed var(--ink-2)', borderTopStyle:'dotted', verticalAlign:'middle', marginRight:3}}></span>median</span>
+              </span>
+            </>
+        }
+      </div>
+    </div>
+  );
+}
+
+/* 차트 확대 모달 (v1.6 / v5.0 — Line 전용 + median) */
+function ChartZoomModal({ zoom, stepObj, dateRange, onClose }) {
+  if (!zoom) return null;
+  const { group, series, axis, aggToggles: initial } = zoom;
+  const [aggToggles, setAggToggles] = useState(initial);
+  const points = effectivePoints(stepObj.id, dateRange);
+  return (
+    <div className="zoom-overlay" onClick={onClose}>
+      <div className="zoom-window" onClick={e=>e.stopPropagation()}>
+        <div className="zoom-head">
+          <span className="title">{group.parentName && <span style={{color:'var(--ink-3)', fontSize:11, fontWeight:500, marginRight:4}}>{group.parentName} ·</span>}{group.title} <span style={{fontSize:11, color:'var(--ink-3)', fontWeight:400, marginLeft:6}}>{group.unit}</span></span>
+          <div className="agg-toggles">
+            {['avg','max','min','median'].map(k => (
+              <label key={k} className={aggToggles[k]?'on':''} onClick={(e)=>{ e.preventDefault(); setAggToggles(s=>({...s, [k]: !s[k]})); }}>
+                <span className={'wf-check ' + (aggToggles[k]?'on':'')} style={{width:10, height:10, borderColor: aggToggles[k]?'#fff':'var(--ink)'}}></span>
+                {k}
+              </label>
+            ))}
+          </div>
+          <span style={{fontSize:11, color:'var(--ink-3)'}}>step = <b style={{color:'var(--ink)'}}>{stepObj.label}</b> · {fmtRangeDisplay(stepObj.id, dateRange)}</span>
+          <button className="wf-btn sm" onClick={onClose}>✕ 닫기</button>
+        </div>
+        <div className="zoom-body">
+          {group.note && <div className="chart-note" style={{margin:0}}>⚠ {group.note}</div>}
+          <div className="zoom-svg-wrap">
+            <ZoomSvg series={series} axis={axis} stepObj={stepObj} aggToggles={aggToggles} dateRange={dateRange} points={points} unitLabel={group.unit} />
+          </div>
+          <div className="chart-legend" style={{padding:'4px 0'}}>
+            {series.length === 0
+              ? <span style={{color:'var(--ink-3)'}}>대상이 없습니다.</span>
+              : series.map((s, i) => (
+                <span key={i}><span className="lgnd-sw" style={{background: s.color, width: 18, height: 3}}></span>{s.label}</span>
+              ))
+            }
+          </div>
+        </div>
+        <div className="zoom-foot">
+          <span>· 단순 크게 보기</span>
+          <span>· 시리즈 {series.length}개 · 데이터 포인트 {points}개</span>
+          <span>· min/avg/max/median 토글은 카드와 별도 적용</span>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+/* 모달 내부에서 SVG가 컨테이너에 맞춰 그려지도록 */
+function ZoomSvg({ series, axis, stepObj, aggToggles, dateRange, points, unitLabel }) {
+  const [size, setSize] = useState({ w: 1180, h: 560 });
+  const wrapRef = React.useRef(null);
+  React.useEffect(() => {
+    if (!wrapRef.current) return;
+    const ro = new ResizeObserver(() => {
+      const r = wrapRef.current.getBoundingClientRect();
+      setSize({ w: Math.max(400, r.width), h: Math.max(300, r.height) });
+    });
+    ro.observe(wrapRef.current);
+    return () => ro.disconnect();
+  }, []);
+  return (
+    <div ref={wrapRef} style={{width:'100%', height:'100%'}}>
+      <LineSvg width={size.w} height={size.h} series={series} axis={axis} stepObj={stepObj} aggToggles={aggToggles} dateRange={dateRange} points={points} unitLabel={unitLabel} />
+    </div>
+  );
+}
+
+function ChartGrid({ category, stepObj, selectedTargets, selectedMetricIds, dateRange, onZoom }) {
+  /* v5.0 (260519) 수정 — 세부 지표(metric id) 단위로 차트 카드 1개씩 나열.
+     · 네트워크 송/수신(-r/-w)은 좌·우 페어로 같은 줄에 유지
+     · 정렬 = METRIC_TREE 노출 순서 (카테고리 > 그룹 > leaf > id) */
+  const NOTES_BY_ID = {
+    'net-err-r':'계산 도출 (rx_errors / rx_packets × 100)',
+    'net-err-w':'계산 도출 (tx_errors / tx_packets × 100)',
+    'net-drop-r':'계산 도출 (rx_dropped / rx_packets × 100)',
+    'net-drop-w':'계산 도출 (tx_dropped / tx_packets × 100)',
+    'vm-net-err-r':'계산 도출 (rx_errors / rx_packets × 100)',
+    'vm-net-err-w':'계산 도출 (tx_errors / tx_packets × 100)',
+    'vm-net-drop-r':'계산 도출 (rx_dropped / rx_packets × 100)',
+    'vm-net-drop-w':'계산 도출 (tx_dropped / tx_packets × 100)',
+  };
+  const orderedIds = useMemo(() => {
+    const out = [];
+    (METRIC_TREE[category] || []).forEach(g => g.leaves.forEach(l => (l.ids || [l.id]).forEach(id => out.push(id))));
+    return out;
+  }, [category]);
+  const groups = useMemo(() => {
+    const set = new Set(selectedMetricIds);
+    return orderedIds.filter(id => set.has(id)).map(id => ({
+      id,
+      title: METRIC_LABELS[id] || id,
+      parentName: METRIC_GROUP[id] || '—',
+      unit: METRIC_UNITS[id] || '',
+      members: [id],
+      note: NOTES_BY_ID[id] || null,
+    }));
+  }, [orderedIds.join(','), selectedMetricIds.join(',')]);
+  // Build rows so that read/write pairs (-r + -w) are always rendered side-by-side.
+  const rows = useMemo(() => {
+    const out = [];
+    let buf = [];
+    const flush = () => { if (buf.length) { out.push(buf); buf = []; } };
+    let i = 0;
+    while (i < groups.length) {
+      const g = groups[i];
+      const next = groups[i+1];
+      const isPair = next && g.id.endsWith('-r') && next.id === g.id.slice(0,-2)+'-w';
+      if (isPair) { flush(); out.push([g, next]); i += 2; }
+      else { buf.push(g); if (buf.length === 2) flush(); i += 1; }
+    }
+    flush();
+    return out;
+  }, [groups.map(g=>g.id).join(',')]);
+  return (
+    <div className="wf-box" style={{padding: 12}}>
+      <div style={{display:'flex', alignItems:'center', justifyContent:'space-between', marginBottom: 10}}>
+        <h3 style={{margin:0, fontSize:13, letterSpacing:'.04em'}}>⑤ 차트 <span style={{color:'var(--ink-3)', fontWeight:400, textTransform:'none', letterSpacing:0}}>— <b style={{color:'var(--ink-2)'}}>세부 지표별 카드 1개</b> · 네트워크 송/수신은 좌·우 페어 · min/avg/max/median 4계열 토글 (default <b style={{color:'var(--ink-2)'}}>avg만</b>) · Y축 = 조회 기간 최대값 기준 자동 스케일 · 라인 호버 시 다값 툴팁</span></h3>
+        <span className="wf-tag">{groups.length} charts</span>
+      </div>
+      {groups.length === 0 ? (
+        <div className="wf-stripe" style={{padding: 40, textAlign:'center', color:'var(--ink-3)', border:'1px dashed var(--line)'}}>선택된 지표가 없습니다 — ② 지표 선택에서 1개 이상 선택하세요.</div>
+      ) : (
+        <div className="chart-rows">
+          {rows.map((row, ri) => {
+            const isPairRow = row.length === 2 && row[0].id.endsWith('-r') && row[1].id === row[0].id.slice(0,-2)+'-w';
+            return (
+              <div key={ri} className={'chart-grid' + (isPairRow ? ' pair-row' : '')}>
+                {row.map(g => (
+                  <ChartCard key={g.id} group={g} stepObj={stepObj} selectedTargets={selectedTargets} dateRange={dateRange} onZoom={onZoom} />
+                ))}
+              </div>
+            );
+          })}
+        </div>
+      )}
+    </div>
+  );
+}
+
+function InfoPopup({ metricId, onClose }) {
+  if (!metricId) return null;
+  const info = INFO_DEFS[metricId] || { name: metricId, formula: '— (정의 미등록)', source: '—', agg: '—', unit: '—' };
+  return (
+    <div className="info-overlay" onClick={onClose}>
+      <div className="info-popup" onClick={e=>e.stopPropagation()}>
+        <h4>ⓘ {info.name} <span style={{color:'var(--ink-3)', fontSize:11, fontWeight:400}}>({metricId})</span></h4>
+        <dl>
+          <dt>수식</dt>     <dd><code>{info.formula}</code></dd>
+          <dt>수집 방법</dt> <dd>{info.source}</dd>
+          <dt>집계 방식</dt> <dd>{info.agg}</dd>
+          <dt>단위</dt>     <dd>{info.unit}</dd>
+        </dl>
+        <div style={{marginTop:14, textAlign:'right'}}>
+          <button className="wf-btn" onClick={onClose}>닫기</button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+/* ============================================================
+   APP ROOT
+   ============================================================ */
+
+function App() {
+  const [category, setCategory] = useState('host');
+  const [projectId, setProjectId] = useState(null);
+  const [search, setSearch] = useState('');
+  const [selectedTargets, setSelectedTargets] = useState({ h1: true, h2: true, h4: true });
+  const [selectedMetrics, setSelectedMetrics] = useState({
+    'cpu-core': true, 'cpu-avg': true, 'mem-used': true, 'net-bw': true, 'net-err-r': true, 'disk-rate': true,
+  });
+  const [step, setStep] = useState('daily');
+  const [dateRange, setDateRange] = useState(defaultRangeFor('daily'));
+  const [infoMetric, setInfoMetric] = useState(null);
+  /* v1.6: 차트 확대 + 저장 프리셋 */
+  const [zoom, setZoom] = useState(null);
+  const [savedPreset, setSavedPreset] = useState(null);
+
+  /* v2.0 — 필터 편집 vs 적용 완료 상태 분리 (조회 깜빡 방지)
+     applied 스냅샷이 ④ 표 + ⑤ 차트의 실제 소스. 편집은 위 state에서 일어나고
+     [▷ 적용] 클릭 시점에 applied 로 커밋된다. 두 상태가 다르면 = dirty. */
+  const initialApplied = {
+    category: 'host', projectId: null,
+    targets: { h1: true, h2: true, h4: true },
+    metrics: { 'cpu-core': true, 'cpu-avg': true, 'mem-used': true, 'net-bw': true, 'net-err-r': true, 'disk-rate': true },
+    step: 'daily', dateRange: defaultRangeFor('daily'),
+  };
+  const [applied, setApplied] = useState(initialApplied);
+  const [lastAppliedAt, setLastAppliedAt] = useState(new Date());
+
+  useEffect(() => {
+    setSearch('');
+    if (category === 'vm') {
+      setProjectId('proj-a');
+      setSelectedTargets({ v1: true, v2: true, v3: true });
+    } else if (category === 'host') {
+      setSelectedTargets({ h1: true, h2: true, h4: true });
+    }
+  }, [category]);
+
+  useEffect(() => {
+    const validIds = new Set((METRIC_TREE[category]||[]).flatMap(g => g.leaves.flatMap(l => l.ids || [l.id])));
+    setSelectedMetrics(sm => {
+      const next = {};
+      Object.keys(sm).forEach(k => { if (validIds.has(k)) next[k] = sm[k]; });
+      if (Object.keys(next).filter(k=>next[k]).length === 0) {
+        const groups = METRIC_TREE[category]||[];
+        [0,1,2].forEach(gi => {
+          const leaf = groups[gi]?.leaves[0];
+          if (leaf) leaf.ids.forEach(id => { next[id] = true; });
+        });
+      }
+      return next;
+    });
+  }, [category]);
+
+  useEffect(() => {
+    setDateRange(defaultRangeFor(step));
+  }, [step]);
+
+  const stepObj = STEPS.find(s => s.id === step);
+
+  const targetList = useMemo(() => {
+    if (category === 'vm') return projectId ? (TARGETS.vm[projectId]||[]) : [];
+    return TARGETS[category] || [];
+  }, [category, projectId]);
+
+  const chosenTargets = targetList.filter(t => selectedTargets[t.id]);
+  const selectedMetricIds = Object.keys(selectedMetrics).filter(k => selectedMetrics[k]);
+
+  /* ──── 적용 완료(applied) 측 파생값 — 표·차트는 이쪽을 본다 ──── */
+  const appliedTargetList = useMemo(() => {
+    if (applied.category === 'vm') return applied.projectId ? (TARGETS.vm[applied.projectId]||[]) : [];
+    return TARGETS[applied.category] || [];
+  }, [applied.category, applied.projectId]);
+  const appliedChosen = appliedTargetList.filter(t => applied.targets[t.id]);
+  const appliedMetricIds = Object.keys(applied.metrics).filter(k => applied.metrics[k]);
+  const appliedStepObj = STEPS.find(s => s.id === applied.step);
+
+  /* ──── dirty 비교 — 편집값 vs 적용값 ──── */
+  const sigTargets = (s) => Object.keys(s).filter(k=>s[k]).sort().join(',');
+  const sigMetrics = sigTargets;
+  const diffs = useMemo(() => {
+    const out = [];
+    if (category !== applied.category) out.push(`카테고리 (${applied.category} → ${category})`);
+    if (projectId !== applied.projectId && (category==='vm' || applied.category==='vm')) out.push('프로젝트 변경');
+    const a = sigTargets(selectedTargets), b = sigTargets(applied.targets);
+    if (a !== b) {
+      const aSet = new Set(a.split(',').filter(Boolean));
+      const bSet = new Set(b.split(',').filter(Boolean));
+      const added = [...aSet].filter(x=>!bSet.has(x)).length;
+      const removed = [...bSet].filter(x=>!aSet.has(x)).length;
+      out.push(`① 대상 ${added?`+${added}`:''}${added&&removed?' / ':''}${removed?`-${removed}`:''}`);
+    }
+    const am = sigMetrics(selectedMetrics), bm = sigMetrics(applied.metrics);
+    if (am !== bm) {
+      const aSet = new Set(am.split(',').filter(Boolean));
+      const bSet = new Set(bm.split(',').filter(Boolean));
+      const added = [...aSet].filter(x=>!bSet.has(x)).length;
+      const removed = [...bSet].filter(x=>!aSet.has(x)).length;
+      out.push(`② 지표 ${added?`+${added}`:''}${added&&removed?' / ':''}${removed?`-${removed}`:''}`);
+    }
+    if (step !== applied.step) out.push(`③ step (${applied.step} → ${step})`);
+    if (dateRange.start !== applied.dateRange.start || dateRange.end !== applied.dateRange.end) out.push('③ 날짜 범위');
+    return out;
+  }, [category, projectId, selectedTargets, selectedMetrics, step, dateRange, applied]);
+  const dirty = diffs.length > 0;
+  const metricMap = useMemo(() => {
+    const out = {};
+    Object.keys(METRIC_LABELS).forEach(id => { out[id] = { id, label: METRIC_LABELS[id] }; });
+    return out;
+  }, [category]);
+
+  const tableData = useMemo(() => {
+    const out = {};
+    chosenTargets.forEach((t, ti) => {
+      const row = {};
+      selectedMetricIds.forEach((m, mi) => {
+        const seed = (t.id.charCodeAt(0) * 41 + m.charCodeAt(0) * 7 + ti*3 + mi*5 + step.charCodeAt(0)*2) >>> 0;
+        const r = seedRand(seed);
+        let avg, min, max;
+        if (m.includes('rate') || m.includes('cpu') || m.includes('cont')) {
+          avg = +(r()*60+20).toFixed(2);
+          min = +(Math.max(0, avg - r()*15)).toFixed(2);
+          max = +(Math.min(100, avg + r()*30)).toFixed(2);
+        } else if (m.includes('mem')) {
+          avg = +(r()*15+8).toFixed(2);
+          min = +(avg - r()*3).toFixed(2);
+          max = +(avg + r()*4).toFixed(2);
+        } else if (m.includes('bw') || m.includes('tp')) {
+          avg = +(r()*400+100).toFixed(2);
+          min = +(avg - r()*60).toFixed(2);
+          max = +(avg + r()*120).toFixed(2);
+        } else if (m.includes('err') || m.includes('drop')) {
+          avg = +(r()*0.5).toFixed(2);
+          min = 0;
+          max = +(avg + r()*0.6).toFixed(2);
+        } else {
+          avg = +(r()*100).toFixed(2);
+          min = +(Math.max(0, avg - r()*20)).toFixed(2);
+          max = +(avg + r()*30).toFixed(2);
+        }
+        row[m] = { min, max, avg };
+      });
+      out[t.id] = row;
+    });
+    return out;
+  }, [chosenTargets.map(t=>t.id).join(','), selectedMetricIds.join(','), step]);
+
+  const toggleLeaf = (leaf) => setSelectedMetrics(s => {
+    const allOn = leaf.ids.every(id => s[id]);
+    const next = {...s};
+    leaf.ids.forEach(id => { next[id] = !allOn; });
+    return next;
+  });
+  const toggleGroup = (g, on) => setSelectedMetrics(s => {
+    const next = {...s};
+    g.leaves.forEach(l => l.ids.forEach(id => { next[id] = on; }));
+    return next;
+  });
+  const selectAllMetrics = () => {
+    const next = {};
+    (METRIC_TREE[category]||[]).forEach(g => g.leaves.forEach(l => l.ids.forEach(id => { next[id] = true; })));
+    setSelectedMetrics(next);
+  };
+  const clearAllMetrics = () => setSelectedMetrics({});
+
+  const onCsv = () => {
+    const totalRows = chosenTargets.length * effectivePoints(step, dateRange);
+    const splitCount = Math.ceil(totalRows / 100000);
+    const baseName = `aggregation_report_${baseDateOf(dateRange.end).replaceAll('-','').replaceAll(' ','_')}_target`;
+    const fileList = splitCount > 1
+      ? Array.from({length: splitCount}).map((_,i)=> `  · ${baseName} (${i+1}/${splitCount}).csv`).join('\n')
+      : `  · ${baseName}.csv`;
+    alert(
+      `CSV 다운로드 (mock)\n` +
+      `\n행: 수집 기준 시점 × 대상 (RAW)` +
+      `\n열: 기준시간·대상명·그룹·(지표 × min/max/avg)` +
+      `\n인코딩: UTF-8 BOM · 소수 2자리` +
+      `\nstep: ${step} · 기간: ${dateRange.start} ~ ${dateRange.end}` +
+      `\n대상: ${chosenTargets.length}개 / 지표: ${selectedMetricIds.length}개 / 시점: ${effectivePoints(step, dateRange)}개` +
+      `\n총 ${totalRows.toLocaleString()}행 → ${splitCount === 1 ? '단일 파일' : `${splitCount}개 분할 (100,000행/파일)`}\n` +
+      `\n[파일]\n${fileList}`
+    );
+  };
+
+  const onRun = () => {
+    /* 편집값을 applied 로 커밋 → 표·차트가 새 데이터로 갱신 */
+    setApplied({
+      category, projectId,
+      targets: {...selectedTargets},
+      metrics: {...selectedMetrics},
+      step, dateRange: {...dateRange},
+    });
+    setLastAppliedAt(new Date());
+  };
+  const onRevertEdits = () => {
+    /* 편집값을 마지막 적용값으로 되돌림 */
+    setCategory(applied.category);
+    setProjectId(applied.projectId);
+    setSelectedTargets({...applied.targets});
+    setSelectedMetrics({...applied.metrics});
+    setStep(applied.step);
+    setDateRange({...applied.dateRange});
+  };
+  const onSavePreset = () => {
+    const ts = new Date();
+    const tag = `${pad2(ts.getMonth()+1)}.${pad2(ts.getDate())} ${pad2(ts.getHours())}:${pad2(ts.getMinutes())} (${selectedMetricIds.length}개 지표)`;
+    setSavedPreset(tag);
+    alert(
+      `[저장] 지표 선택 프리셋을 계정 단위로 저장합니다. (mock)\n` +
+      `\n· 저장 대상: 현재 ${selectedMetricIds.length}개 지표 선택 상태` +
+      `\n· 적용 범위: admin@okestro 계정 전역` +
+      `\n· 다음 접속 시 동일하게 복원됩니다.`
+    );
+  };
+
+  return (
+    <>
+      <div className="canvas">
+        <Topbar />
+        <div className="body">
+          <InfoBanner />
+
+          <CategoryRow value={category} onChange={setCategory} />
+
+          {/* v2.0 — 필터 영역 그룹핑: ① + ② + ③ 을 하나의 묶음으로 + 공용 [적용] 액션바 */}
+          <div className={'filter-area' + (dirty ? ' dirty' : '')}>
+            <div className="filter-area-head">
+              <span className="icon">▦</span>
+              <span>필터 — 대상 · 지표 · 조회 조건</span>
+              <span className="sub">{dirty ? '편집 중 — 표·차트는 마지막 적용값으로 표시 중' : '아래 ①②③ 설정값을 한꺼번에 표·차트에 반영합니다'}</span>
+              <span className={'filter-area-state ' + (dirty ? 'dirty' : 'clean')}>
+                <span className="dot"></span>{dirty ? '편집 중 (미적용)' : '적용 완료'}
+              </span>
+              <span className="badge">
+                <b>{appliedChosen.length}</b><span style={{opacity:.7}}>개 대상</span>
+                <span style={{opacity:.4}}>×</span>
+                <b>{appliedMetricIds.length}</b><span style={{opacity:.7}}>개 지표</span>
+                <span style={{opacity:.4}}>·</span>
+                <b>{appliedStepObj.label}</b>
+              </span>
+            </div>
+            <div className="filter-area-stack">
+              <TargetPanel category={category}
+                           projectId={projectId} setProjectId={setProjectId}
+                           search={search} setSearch={setSearch}
+                           selected={selectedTargets} setSelected={setSelectedTargets} />
+
+              <MetricTree category={category}
+                          selected={selectedMetrics}
+                          onToggleLeaf={toggleLeaf}
+                          onToggleGroup={toggleGroup}
+                          onSelectAll={selectAllMetrics}
+                          onClearAll={clearAllMetrics}
+                          onInfo={setInfoMetric} />
+
+              <FilterBar step={step} setStep={setStep}
+                         dateRange={dateRange} setDateRange={setDateRange} />
+            </div>
+          </div>
+          <div className={'filter-area-foot sticky-foot' + (dirty ? ' dirty' : '')}>
+            <div className="summary">
+              <div className="row2" style={{flexWrap:'wrap'}}>
+                {dirty ? (
+                  <>
+                    <b style={{color:'#b54708'}}>● 편집된 항목이 있습니다 — [적용]을 실행해야 표·차트에 반영됩니다.</b>
+                    {diffs.map((d, i) => <span key={i} className="diff-pill">{d}</span>)}
+                  </>
+                ) : (
+                  <>
+                    <span style={{color:'#15803d', fontWeight:600}}>✓ 모든 변경 사항이 적용된 상태입니다.</span>
+                    <span style={{color:'var(--ink-3)', fontSize:11}}>
+                      <b style={{color:'var(--ink-2)'}}>{appliedStepObj.label}</b> · {fmtRangeDisplay(applied.step, applied.dateRange)} · 대상 <b style={{color:'var(--ink-2)'}}>{appliedChosen.length}</b> · 지표 <b style={{color:'var(--ink-2)'}}>{appliedMetricIds.length}</b>
+                    </span>
+                    <span style={{color:'var(--ink-3)'}}>마지막 적용 — {pad2(lastAppliedAt.getHours())}:{pad2(lastAppliedAt.getMinutes())}:{pad2(lastAppliedAt.getSeconds())}</span>
+                  </>
+                )}
+                {(chosenTargets.length===0 || selectedMetricIds.length===0) && (
+                  <span style={{color:'var(--warn)', background:'var(--warn-bg)', border:'1px solid var(--warn)', padding:'1px 7px'}}>⚠ 대상·지표를 1개 이상 선택하세요</span>
+                )}
+                {savedPreset && <span className="saved">💾 저장된 지표 프리셋: <b style={{color:'var(--ink-2)'}}>{savedPreset}</b></span>}
+              </div>
+            </div>
+            <div className="actions">
+              {dirty && (
+                <button className="wf-btn" onClick={onRevertEdits} title="편집한 ①대상 · ②지표 · ③조건을 마지막 적용값으로 되돌립니다">↶ 변경 취소</button>
+              )}
+              <button className="wf-btn" onClick={onSavePreset} title="현재 지표 선택을 계정별 영구 저장 — admin@okestro 전역 (모든 디바이스/세션 공유)">💾 지표 저장 <span style={{fontSize:10, color:'var(--ink-3)'}}>(계정별)</span></button>
+              <button className={'wf-btn primary' + (dirty ? ' pulse' : '')} onClick={onRun}
+                      disabled={chosenTargets.length===0 || selectedMetricIds.length===0 || !dirty}
+                      style={{opacity: (chosenTargets.length===0 || selectedMetricIds.length===0 || !dirty)?.4:1, cursor: (chosenTargets.length===0 || selectedMetricIds.length===0 || !dirty)?'not-allowed':'pointer'}}
+                      title={!dirty ? '변경된 필터가 없습니다' : '편집한 ①②③ 값을 ④ 표 / ⑤ 차트에 반영'}>
+                <span className="apply-arrow">▷</span>{dirty ? '조회' : '조회 완료'}
+              </button>
+            </div>
+          </div>
+
+          <DataTable selectedTargets={appliedChosen}
+                     category={applied.category}
+                     selectedMetricIds={appliedMetricIds}
+                     metricMap={metricMap}
+                     tableData={tableData}
+                     stepObj={appliedStepObj}
+                     dateRange={applied.dateRange}
+                     onCsv={onCsv} />
+
+          <ChartGrid category={applied.category}
+                     stepObj={appliedStepObj}
+                     selectedTargets={appliedChosen}
+                     selectedMetricIds={appliedMetricIds}
+                     dateRange={applied.dateRange}
+                     onZoom={setZoom} />
+
+          <div className="legend-key">
+            <span><b>v5.0 (260519 ~ 추가 요청 반영)</b></span>
+            <span style={{flexBasis:'100%', height:0}}></span>
+            <span>⑨ <b>차트 default 표출 = avg 만 ON</b> · 라인 <b>호버 시 레전드별 다값 CSV 툴팁</b> (Max: 85%, Median: 42%, Avg: 40%, Min: 12% 형식 · 시리즈 여러 개 지원)</span>
+            <span>⑩ <b>세부 지표별 라인 차트 카드 1개씩 나열</b> · 네트워크 송/수신은 좌·우 페어 유지</span>
+            <span>⑪ 차트 카드의 <b>[LINE]</b> 배지 표기 일괄 제거 · 차트 Y축 = <b>조회 기간 최대값 기준 자동 스케일</b></span>
+            <span>⑫ 데이터 테이블 <b>「일반 지표」 탭 일괄 제거</b> (별도 히스토리 메뉴 존재) · 지표 산정 근거 아이콘 <s>i</s> → <b>?</b> 일괄 변경</span>
+            <span>⑬ 수집 기간 모달 내 <b>[수집 시작][수집 종료] 토글 버튼 일괄 제거</b> (4개 picker 모두) · 입력 필드 클릭으로 포커스 전환</span>
+            <span style={{marginTop:6, paddingTop:6, borderTop:'1px dashed var(--ink-3)', width:'100%'}}><b>v5.0 (260519) — 집계 보고서 4.0 수정 요청 반영</b></span>
+            <span style={{flexBasis:'100%', height:0}}></span>
+            <span>⑧ <b>Hourly 캘린더 = Daily와 동일 듀얼 캘린더</b> · <b>시간(시) 선택 UI 제거</b> — 수집 시작=00시 / 수집 종료=23시 자동 고정 (추가 요청)</span>
+            <span style={{flexBasis:'100%', height:0}}></span>
+            <span>① <b>median(중위값) 지표 추가</b> → 필터/데이터/차트 일괄 업데이트 · 모든 지표 4계열 (min/avg/max/median)</span>
+            <span>② 지표별 수집 항목 <b>min · avg · max · median</b> 일괄 (② 지표 헤더에 알약 표기 / ④ 표 lvl2 컬럼 / ⑤ 차트 토글)</span>
+            <span style={{flexBasis:'100%', height:0}}></span>
+            <span>③ ④ 데이터 테이블 <b>행 조회 개수 선택</b> — default <b>20행</b> · 50 · 100 (셀렉터에서 변경)</span>
+            <span>④ ⑤ 차트 <b>Y축 = 조회 기간 최대값 기준 자동 스케일</b> (추가 요청 · v5.0)</span>
+            <span style={{flexBasis:'100%', height:0}}></span>
+            <span>⑤ ⑤ 차트 <b>Line 통일</b> — <s>Area 차트</s> 일괄 제거 (CPU·메모리·디스크 모두 Line)</span>
+            <span>⑥ <b>달력 시작일 일괄 일요일(Sun) 적용</b> — Hourly/Daily/Weekly/Monthly 모든 캘린더 · Weekly 정의도 <s>ISO 8601 Mon-Sun</s> → <b>Sun-Sat</b></span>
+            <span>⑦ [💾 지표 저장] = <b>계정별 영구 보존</b> (admin@okestro 전역) · 저장 후 액션바에 프리셋 태그 노출</span>
+            <span style={{marginTop:6, paddingTop:6, borderTop:'1px dashed var(--ink-3)', width:'100%'}}><b>v4.0 (260515) — 회의록 반영 + VM 인스턴스 상태/미터링 그룹 일괄 제거</b></span>
+            <span style={{flexBasis:'100%', height:0}}></span>
+            <span><b>지표 트리</b> — VM 「<s>인스턴스 상태</s> (m-life/m-active/m-active-rate)」 + 「<s>미터링</s> (m-vol-cnt/m-vol-size/m-vcpu/m-vmem)」 <b>일괄 제거</b> → 미터링은 별도 메뉴로 분리 예정</span>
+            <span>④ 데이터 테이블 「일반 지표」 탭 → <b>비활성</b> (해당 그룹 부재) · 「성능 지표」 탭만 사용</span>
+            <span style={{flexBasis:'100%', height:0}}></span>
+            <span><b>③ 조회 조건 용어 정비</b> — <s>시작/종료</s> → <b>수집 시작 / 수집 종료</b> · <b>분(:mm) 제거</b> (hourly = <code>HH시</code> 단위) · <b>양끝 일시 포함</b></span>
+            <span><b>Weekly 표준 (v4.0 시점)</b> = <s>ISO 8601 Mon-Sun</s> <span style={{color:'#b54708'}}>→ v5.0에서 <b>Sun-Sat</b>로 변경</span> · <em style={{background:'var(--hi)', padding:'0 3px', fontStyle:'normal'}}>&lt;a-range-picker picker="week"&gt;</em></span>
+            <span>드롭다운 = <b>조회성</b> (셀 클릭으로 입력, 직접 타이핑 불가)</span>
+            <span>지표 [💾 저장] = <b>계정별</b> 영구 보존 (admin@okestro 전역) · Default <b>Empty</b> 정책 명시</span>
+            <span>[적용] 버튼 라벨 → <b>[조회]</b> 로 통일 (260515 §3.8 [검색] 버튼 용어 변경)</span>
+            <span>시간(hourly)대별 수집 기준 안내 문구 추가 (HH:00 ~ HH:59 집계 결과)</span>
+            <span style={{marginTop:6, paddingTop:6, borderTop:'1px dashed var(--ink-3)', width:'100%'}}><b>v2.0 (260514) 미터링 지표 편입 + 필터 그룹핑</b></span>
+            <span style={{flexBasis:'100%', height:0}}></span>
+            <span>미터링 지표 7종 추가 (VM → <b>미터링</b> 그룹) · 존재기간·활성시간·활성률·볼륨개수·볼륨크기·vCPU·vMemory</span>
+            <span style={{flexBasis:'100%', height:0}}></span>
+            <span>차트 타입 분기: <b>BarChart list</b>(존재기간·활성률) · <b>LineChart</b>(볼륨개수) · <b>AreaChart</b>(볼륨크기·vCPU·vMemory) · 활성시간 = 차트 미제공 (표·CSV만)</span>
+            <span style={{flexBasis:'100%', height:0}}></span>
+            <span><b>[적용] 버튼 재배치</b> — ② 하단에서 구조적으로 양못될 수 있어, ①+②+③를 <b>하나의 «필터 영역»</b>으로 묶고 공용 액션바를 그 하단에 배치</span>
+            <span>→ [적용]이 세 필터에 모두 관여함이 시각적으로 명확해짐</span>
+            <span style={{marginTop:6, paddingTop:6, borderTop:'1px dashed var(--ink-3)', width:'100%'}}><b>v1.9 (260513) 후속 보완</b></span>
+            <span>대상 선택: <b>최대 선택 개수 제약 제거</b> (200건 한도 인디케이터 삭제)</span>
+            <span>Weekly: 연·월 + <b>주차 W1–W5 드롭다운</b> 선택 (예: 2026.04 W2 ~ 2026.05 W3)</span>
+            <span>유효성: 「종료일 이후 시점은 시작으로 선택 불가」 / 「시작일 이전 시점은 종료로 선택 불가」</span>
+            <span>→ 캘린더 셀·월 셀에서 <b>비활성화</b> 표시 + 하단에 명확한 안내 메시지</span>
+            <span style={{marginTop:6, paddingTop:6, borderTop:'1px dashed var(--ink-3)', width:'100%'}}><b>v1.8 대상 선택 보완</b></span>
+            <span>마스터 체크박스 · 선택 리스트 그룹별/플랫 뷰 · 검색</span>
+            <span style={{marginTop:6, paddingTop:6, borderTop:'1px dashed var(--ink-3)', width:'100%'}}><b>v1.7 캘린더 개선</b></span>
+            <span>Hourly/Daily 연월일 드롭다운 · Weekly/Monthly 연월 드롭다운 · 캘린더 1–9월 한자리수 · 퀵버튼 모두 제거</span>
+            <span style={{marginTop:6, paddingTop:6, borderTop:'1px dashed var(--ink-3)', width:'100%'}}><b>v1.6 (260513) 2차 피드백</b></span>
+            <span>① 대상 / ② 지표 / ③ 조건 / ④ 표 모두 <b>아코디언 UI</b></span>
+            <span>대상: <b>드롭다운 + 체크박스</b> + <b>선택 완료 리스트(세로 스크롤)</b></span>
+            <span>지표: <b>[조회] / [저장 — 계정 단위]</b> 버튼</span>
+            <span>조회 조건: step별 <b>범위 제약 제거</b> · 차트 daily x축 <b>mm/dd</b> · 카드별 <b>[⌬ 확대]</b></span>
+            <span>표: <b>세로 스크롤</b> · 4.2 요약 → RAW는 고도화(4.0 제외)</span>
+            <span>로드맵 <s>3.0.6.1 제거</s> · 4.0 26'12/21 · 리팩토링 27'4월 · 미터링/중위값 검토</span>
+          </div>
+        </div>
+      </div>
+
+      <InfoPopup metricId={infoMetric} onClose={()=>setInfoMetric(null)} />
+      <ChartZoomModal zoom={zoom} stepObj={stepObj} dateRange={dateRange} onClose={()=>setZoom(null)} />
+    </>
+  );
+}
+
+ReactDOM.createRoot(document.getElementById('root')).render(<App />);
+</script>
+</body>
+</html>
