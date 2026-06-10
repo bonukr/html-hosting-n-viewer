@@ -1,0 +1,508 @@
+Chain INPUT (policy ACCEPT)
+target     prot opt source               destination         
+KUBE-ROUTER-INPUT  all  --  0.0.0.0/0            0.0.0.0/0            /* kube-router netpol - 4IA2OSFRMVNDXBVV */
+KUBE-PROXY-FIREWALL  all  --  0.0.0.0/0            0.0.0.0/0            ctstate NEW /* kubernetes load balancer firewall */
+KUBE-NODEPORTS  all  --  0.0.0.0/0            0.0.0.0/0            /* kubernetes health check service ports */
+KUBE-EXTERNAL-SERVICES  all  --  0.0.0.0/0            0.0.0.0/0            ctstate NEW /* kubernetes externally-visible service portals */
+KUBE-FIREWALL  all  --  0.0.0.0/0            0.0.0.0/0           
+ACCEPT     all  --  0.0.0.0/0            0.0.0.0/0            /* KUBE-ROUTER rule to explicitly ACCEPT traffic that comply to network policies */ mark match 0x20000/0x20000
+ACCEPT     all  --  0.0.0.0/0            0.0.0.0/0            state RELATED,ESTABLISHED
+ACCEPT     icmp --  0.0.0.0/0            0.0.0.0/0           
+ACCEPT     all  --  0.0.0.0/0            0.0.0.0/0           
+ACCEPT     udp  --  0.0.0.0/0            0.0.0.0/0            udp spt:123
+ACCEPT     tcp  --  0.0.0.0/0            0.0.0.0/0            state NEW tcp dpt:22
+ACCEPT     tcp  --  0.0.0.0/0            0.0.0.0/0            state NEW tcp dpt:80
+ACCEPT     tcp  --  0.0.0.0/0            0.0.0.0/0            state NEW tcp dpt:8080
+ACCEPT     tcp  --  0.0.0.0/0            0.0.0.0/0            state NEW tcp dpt:443
+ACCEPT     tcp  --  0.0.0.0/0            0.0.0.0/0            state NEW tcp dpt:8443
+ACCEPT     tcp  --  0.0.0.0/0            0.0.0.0/0            state NEW tcp dpt:7001
+ACCEPT     tcp  --  0.0.0.0/0            0.0.0.0/0            state NEW tcp dpt:8001
+REJECT     all  --  0.0.0.0/0            0.0.0.0/0            reject-with icmp-host-prohibited
+ACCEPT     tcp  --  0.0.0.0/0            0.0.0.0/0            tcp dpt:3306
+ACCEPT     tcp  --  0.0.0.0/0            0.0.0.0/0            tcp dpt:5432
+ACCEPT     tcp  --  0.0.0.0/0            0.0.0.0/0            tcp dpt:8088
+ACCEPT     tcp  --  0.0.0.0/0            0.0.0.0/0            tcp dpt:8088
+ACCEPT     tcp  --  0.0.0.0/0            0.0.0.0/0            tcp dpt:8081
+ACCEPT     tcp  --  0.0.0.0/0            0.0.0.0/0            tcp dpt:8088
+ACCEPT     tcp  --  0.0.0.0/0            0.0.0.0/0            tcp dpt:8001
+ACCEPT     tcp  --  0.0.0.0/0            0.0.0.0/0            tcp dpt:8002
+ACCEPT     tcp  --  0.0.0.0/0            0.0.0.0/0            tcp dpt:8003
+ACCEPT     tcp  --  0.0.0.0/0            0.0.0.0/0            tcp dpt:8004
+ACCEPT     tcp  --  0.0.0.0/0            0.0.0.0/0            tcp dpt:8005
+ACCEPT     tcp  --  0.0.0.0/0            0.0.0.0/0            tcp dpt:8006
+ACCEPT     tcp  --  0.0.0.0/0            0.0.0.0/0            tcp dpt:8007
+ACCEPT     tcp  --  0.0.0.0/0            0.0.0.0/0            tcp dpt:8008
+ACCEPT     tcp  --  0.0.0.0/0            0.0.0.0/0            tcp dpt:8009
+KUBE-ROUTER-INPUT  all  --  0.0.0.0/0            0.0.0.0/0            /* kube-router netpol - 4IA2OSFRMVNDXBVV */
+KUBE-PROXY-FIREWALL  all  --  0.0.0.0/0            0.0.0.0/0            ctstate NEW /* kubernetes load balancer firewall */
+KUBE-NODEPORTS  all  --  0.0.0.0/0            0.0.0.0/0            /* kubernetes health check service ports */
+KUBE-EXTERNAL-SERVICES  all  --  0.0.0.0/0            0.0.0.0/0            ctstate NEW /* kubernetes externally-visible service portals */
+KUBE-FIREWALL  all  --  0.0.0.0/0            0.0.0.0/0           
+ACCEPT     all  --  0.0.0.0/0            0.0.0.0/0            /* KUBE-ROUTER rule to explicitly ACCEPT traffic that comply to network policies */ mark match 0x20000/0x20000
+ACCEPT     all  --  0.0.0.0/0            0.0.0.0/0            state RELATED,ESTABLISHED
+ACCEPT     icmp --  0.0.0.0/0            0.0.0.0/0           
+ACCEPT     all  --  0.0.0.0/0            0.0.0.0/0           
+ACCEPT     udp  --  0.0.0.0/0            0.0.0.0/0            udp spt:123
+ACCEPT     tcp  --  0.0.0.0/0            0.0.0.0/0            state NEW tcp dpt:22
+ACCEPT     tcp  --  0.0.0.0/0            0.0.0.0/0            state NEW tcp dpt:80
+ACCEPT     tcp  --  0.0.0.0/0            0.0.0.0/0            state NEW tcp dpt:8080
+ACCEPT     tcp  --  0.0.0.0/0            0.0.0.0/0            state NEW tcp dpt:443
+ACCEPT     tcp  --  0.0.0.0/0            0.0.0.0/0            state NEW tcp dpt:8443
+ACCEPT     tcp  --  0.0.0.0/0            0.0.0.0/0            state NEW tcp dpt:7001
+ACCEPT     tcp  --  0.0.0.0/0            0.0.0.0/0            state NEW tcp dpt:8001
+REJECT     all  --  0.0.0.0/0            0.0.0.0/0            reject-with icmp-host-prohibited
+ACCEPT     tcp  --  0.0.0.0/0            0.0.0.0/0            tcp dpt:3306
+ACCEPT     tcp  --  0.0.0.0/0            0.0.0.0/0            tcp dpt:5432
+ACCEPT     tcp  --  0.0.0.0/0            0.0.0.0/0            tcp dpt:8088
+ACCEPT     tcp  --  0.0.0.0/0            0.0.0.0/0            tcp dpt:8088
+ACCEPT     tcp  --  0.0.0.0/0            0.0.0.0/0            tcp dpt:8081
+ACCEPT     tcp  --  0.0.0.0/0            0.0.0.0/0            tcp dpt:8088
+ACCEPT     tcp  --  0.0.0.0/0            0.0.0.0/0            tcp dpt:8001
+ACCEPT     tcp  --  0.0.0.0/0            0.0.0.0/0            tcp dpt:8002
+ACCEPT     tcp  --  0.0.0.0/0            0.0.0.0/0            tcp dpt:8003
+ACCEPT     tcp  --  0.0.0.0/0            0.0.0.0/0            tcp dpt:8004
+ACCEPT     tcp  --  0.0.0.0/0            0.0.0.0/0            tcp dpt:8005
+ACCEPT     tcp  --  0.0.0.0/0            0.0.0.0/0            tcp dpt:8006
+ACCEPT     tcp  --  0.0.0.0/0            0.0.0.0/0            tcp dpt:8007
+ACCEPT     tcp  --  0.0.0.0/0            0.0.0.0/0            tcp dpt:8008
+ACCEPT     tcp  --  0.0.0.0/0            0.0.0.0/0            tcp dpt:8009
+KUBE-ROUTER-INPUT  all  --  0.0.0.0/0            0.0.0.0/0            /* kube-router netpol - 4IA2OSFRMVNDXBVV */
+KUBE-PROXY-FIREWALL  all  --  0.0.0.0/0            0.0.0.0/0            ctstate NEW /* kubernetes load balancer firewall */
+KUBE-NODEPORTS  all  --  0.0.0.0/0            0.0.0.0/0            /* kubernetes health check service ports */
+KUBE-EXTERNAL-SERVICES  all  --  0.0.0.0/0            0.0.0.0/0            ctstate NEW /* kubernetes externally-visible service portals */
+KUBE-FIREWALL  all  --  0.0.0.0/0            0.0.0.0/0           
+ACCEPT     all  --  0.0.0.0/0            0.0.0.0/0            /* KUBE-ROUTER rule to explicitly ACCEPT traffic that comply to network policies */ mark match 0x20000/0x20000
+ACCEPT     all  --  0.0.0.0/0            0.0.0.0/0            state RELATED,ESTABLISHED
+ACCEPT     icmp --  0.0.0.0/0            0.0.0.0/0           
+ACCEPT     all  --  0.0.0.0/0            0.0.0.0/0           
+ACCEPT     udp  --  0.0.0.0/0            0.0.0.0/0            udp spt:123
+ACCEPT     tcp  --  0.0.0.0/0            0.0.0.0/0            state NEW tcp dpt:22
+ACCEPT     tcp  --  0.0.0.0/0            0.0.0.0/0            state NEW tcp dpt:80
+ACCEPT     tcp  --  0.0.0.0/0            0.0.0.0/0            state NEW tcp dpt:443
+ACCEPT     tcp  --  0.0.0.0/0            0.0.0.0/0            state NEW tcp dpt:7001
+ACCEPT     tcp  --  0.0.0.0/0            0.0.0.0/0            state NEW tcp dpt:8001
+ACCEPT     tcp  --  0.0.0.0/0            0.0.0.0/0            state NEW tcp dpt:8002
+ACCEPT     tcp  --  0.0.0.0/0            0.0.0.0/0            state NEW tcp dpt:8003
+ACCEPT     tcp  --  0.0.0.0/0            0.0.0.0/0            state NEW tcp dpt:8004
+ACCEPT     tcp  --  0.0.0.0/0            0.0.0.0/0            state NEW tcp dpt:8005
+ACCEPT     tcp  --  0.0.0.0/0            0.0.0.0/0            state NEW tcp dpt:8006
+ACCEPT     tcp  --  0.0.0.0/0            0.0.0.0/0            state NEW tcp dpt:8007
+ACCEPT     tcp  --  0.0.0.0/0            0.0.0.0/0            state NEW tcp dpt:8008
+ACCEPT     tcp  --  0.0.0.0/0            0.0.0.0/0            state NEW tcp dpt:8009
+ACCEPT     tcp  --  0.0.0.0/0            0.0.0.0/0            state NEW tcp dpt:3306
+ACCEPT     tcp  --  0.0.0.0/0            0.0.0.0/0            state NEW tcp dpt:5432
+ACCEPT     tcp  --  0.0.0.0/0            0.0.0.0/0            state NEW tcp dpt:8080
+ACCEPT     tcp  --  0.0.0.0/0            0.0.0.0/0            state NEW tcp dpt:8081
+ACCEPT     tcp  --  0.0.0.0/0            0.0.0.0/0            state NEW tcp dpt:8088
+ACCEPT     tcp  --  0.0.0.0/0            0.0.0.0/0            state NEW tcp dpt:8443
+REJECT     all  --  0.0.0.0/0            0.0.0.0/0            reject-with icmp-host-prohibited
+ACCEPT     tcp  --  0.0.0.0/0            0.0.0.0/0            state NEW tcp dpt:8088
+KUBE-ROUTER-INPUT  all  --  0.0.0.0/0            0.0.0.0/0            /* kube-router netpol - 4IA2OSFRMVNDXBVV */
+KUBE-PROXY-FIREWALL  all  --  0.0.0.0/0            0.0.0.0/0            ctstate NEW /* kubernetes load balancer firewall */
+KUBE-NODEPORTS  all  --  0.0.0.0/0            0.0.0.0/0            /* kubernetes health check service ports */
+KUBE-EXTERNAL-SERVICES  all  --  0.0.0.0/0            0.0.0.0/0            ctstate NEW /* kubernetes externally-visible service portals */
+KUBE-FIREWALL  all  --  0.0.0.0/0            0.0.0.0/0           
+ACCEPT     all  --  0.0.0.0/0            0.0.0.0/0            /* KUBE-ROUTER rule to explicitly ACCEPT traffic that comply to network policies */ mark match 0x20000/0x20000
+ACCEPT     all  --  0.0.0.0/0            0.0.0.0/0            state RELATED,ESTABLISHED
+ACCEPT     icmp --  0.0.0.0/0            0.0.0.0/0           
+ACCEPT     all  --  0.0.0.0/0            0.0.0.0/0           
+ACCEPT     udp  --  0.0.0.0/0            0.0.0.0/0            udp spt:123
+ACCEPT     tcp  --  0.0.0.0/0            0.0.0.0/0            state NEW tcp dpt:22
+ACCEPT     tcp  --  0.0.0.0/0            0.0.0.0/0            state NEW tcp dpt:80
+ACCEPT     tcp  --  0.0.0.0/0            0.0.0.0/0            state NEW tcp dpt:443
+ACCEPT     tcp  --  0.0.0.0/0            0.0.0.0/0            state NEW tcp dpt:7001
+ACCEPT     tcp  --  0.0.0.0/0            0.0.0.0/0            state NEW tcp dpt:8001
+ACCEPT     tcp  --  0.0.0.0/0            0.0.0.0/0            state NEW tcp dpt:8002
+ACCEPT     tcp  --  0.0.0.0/0            0.0.0.0/0            state NEW tcp dpt:8003
+ACCEPT     tcp  --  0.0.0.0/0            0.0.0.0/0            state NEW tcp dpt:8004
+ACCEPT     tcp  --  0.0.0.0/0            0.0.0.0/0            state NEW tcp dpt:8005
+ACCEPT     tcp  --  0.0.0.0/0            0.0.0.0/0            state NEW tcp dpt:8006
+ACCEPT     tcp  --  0.0.0.0/0            0.0.0.0/0            state NEW tcp dpt:8007
+ACCEPT     tcp  --  0.0.0.0/0            0.0.0.0/0            state NEW tcp dpt:8008
+ACCEPT     tcp  --  0.0.0.0/0            0.0.0.0/0            state NEW tcp dpt:8009
+ACCEPT     tcp  --  0.0.0.0/0            0.0.0.0/0            state NEW tcp dpt:3306
+ACCEPT     tcp  --  0.0.0.0/0            0.0.0.0/0            state NEW tcp dpt:5432
+ACCEPT     tcp  --  0.0.0.0/0            0.0.0.0/0            state NEW tcp dpt:8080
+ACCEPT     tcp  --  0.0.0.0/0            0.0.0.0/0            state NEW tcp dpt:8081
+ACCEPT     tcp  --  0.0.0.0/0            0.0.0.0/0            state NEW tcp dpt:8088
+ACCEPT     tcp  --  0.0.0.0/0            0.0.0.0/0            state NEW tcp dpt:8443
+REJECT     all  --  0.0.0.0/0            0.0.0.0/0            reject-with icmp-host-prohibited
+
+Chain FORWARD (policy DROP)
+target     prot opt source               destination         
+KUBE-ROUTER-FORWARD  all  --  0.0.0.0/0            0.0.0.0/0            /* kube-router netpol - TEMCG2JMHZYE7H7T */
+KUBE-PROXY-FIREWALL  all  --  0.0.0.0/0            0.0.0.0/0            ctstate NEW /* kubernetes load balancer firewall */
+KUBE-FORWARD  all  --  0.0.0.0/0            0.0.0.0/0            /* kubernetes forwarding rules */
+KUBE-SERVICES  all  --  0.0.0.0/0            0.0.0.0/0            ctstate NEW /* kubernetes service portals */
+KUBE-EXTERNAL-SERVICES  all  --  0.0.0.0/0            0.0.0.0/0            ctstate NEW /* kubernetes externally-visible service portals */
+ACCEPT     all  --  0.0.0.0/0            0.0.0.0/0            /* KUBE-ROUTER rule to explicitly ACCEPT traffic that comply to network policies */ mark match 0x20000/0x20000
+DOCKER-USER  all  --  0.0.0.0/0            0.0.0.0/0           
+DOCKER-ISOLATION-STAGE-1  all  --  0.0.0.0/0            0.0.0.0/0           
+ACCEPT     all  --  0.0.0.0/0            0.0.0.0/0            ctstate RELATED,ESTABLISHED
+DOCKER     all  --  0.0.0.0/0            0.0.0.0/0           
+ACCEPT     all  --  0.0.0.0/0            0.0.0.0/0           
+ACCEPT     all  --  0.0.0.0/0            0.0.0.0/0           
+ACCEPT     all  --  0.0.0.0/0            0.0.0.0/0            ctstate RELATED,ESTABLISHED
+DOCKER     all  --  0.0.0.0/0            0.0.0.0/0           
+ACCEPT     all  --  0.0.0.0/0            0.0.0.0/0           
+ACCEPT     all  --  0.0.0.0/0            0.0.0.0/0           
+REJECT     all  --  0.0.0.0/0            0.0.0.0/0            reject-with icmp-host-prohibited
+FLANNEL-FWD  all  --  0.0.0.0/0            0.0.0.0/0            /* flanneld forward */
+KUBE-ROUTER-FORWARD  all  --  0.0.0.0/0            0.0.0.0/0            /* kube-router netpol - TEMCG2JMHZYE7H7T */
+KUBE-PROXY-FIREWALL  all  --  0.0.0.0/0            0.0.0.0/0            ctstate NEW /* kubernetes load balancer firewall */
+KUBE-FORWARD  all  --  0.0.0.0/0            0.0.0.0/0            /* kubernetes forwarding rules */
+KUBE-SERVICES  all  --  0.0.0.0/0            0.0.0.0/0            ctstate NEW /* kubernetes service portals */
+KUBE-EXTERNAL-SERVICES  all  --  0.0.0.0/0            0.0.0.0/0            ctstate NEW /* kubernetes externally-visible service portals */
+ACCEPT     all  --  0.0.0.0/0            0.0.0.0/0            /* KUBE-ROUTER rule to explicitly ACCEPT traffic that comply to network policies */ mark match 0x20000/0x20000
+DOCKER-USER  all  --  0.0.0.0/0            0.0.0.0/0           
+DOCKER-ISOLATION-STAGE-1  all  --  0.0.0.0/0            0.0.0.0/0           
+ACCEPT     all  --  0.0.0.0/0            0.0.0.0/0            ctstate RELATED,ESTABLISHED
+DOCKER     all  --  0.0.0.0/0            0.0.0.0/0           
+ACCEPT     all  --  0.0.0.0/0            0.0.0.0/0           
+ACCEPT     all  --  0.0.0.0/0            0.0.0.0/0           
+ACCEPT     all  --  0.0.0.0/0            0.0.0.0/0            ctstate RELATED,ESTABLISHED
+DOCKER     all  --  0.0.0.0/0            0.0.0.0/0           
+ACCEPT     all  --  0.0.0.0/0            0.0.0.0/0           
+ACCEPT     all  --  0.0.0.0/0            0.0.0.0/0           
+REJECT     all  --  0.0.0.0/0            0.0.0.0/0            reject-with icmp-host-prohibited
+FLANNEL-FWD  all  --  0.0.0.0/0            0.0.0.0/0            /* flanneld forward */
+KUBE-ROUTER-FORWARD  all  --  0.0.0.0/0            0.0.0.0/0            /* kube-router netpol - TEMCG2JMHZYE7H7T */
+KUBE-PROXY-FIREWALL  all  --  0.0.0.0/0            0.0.0.0/0            ctstate NEW /* kubernetes load balancer firewall */
+KUBE-FORWARD  all  --  0.0.0.0/0            0.0.0.0/0            /* kubernetes forwarding rules */
+KUBE-SERVICES  all  --  0.0.0.0/0            0.0.0.0/0            ctstate NEW /* kubernetes service portals */
+KUBE-EXTERNAL-SERVICES  all  --  0.0.0.0/0            0.0.0.0/0            ctstate NEW /* kubernetes externally-visible service portals */
+ACCEPT     all  --  0.0.0.0/0            0.0.0.0/0            /* KUBE-ROUTER rule to explicitly ACCEPT traffic that comply to network policies */ mark match 0x20000/0x20000
+DOCKER-USER  all  --  0.0.0.0/0            0.0.0.0/0           
+DOCKER-ISOLATION-STAGE-1  all  --  0.0.0.0/0            0.0.0.0/0           
+ACCEPT     all  --  0.0.0.0/0            0.0.0.0/0            ctstate RELATED,ESTABLISHED
+DOCKER     all  --  0.0.0.0/0            0.0.0.0/0           
+ACCEPT     all  --  0.0.0.0/0            0.0.0.0/0           
+ACCEPT     all  --  0.0.0.0/0            0.0.0.0/0           
+ACCEPT     all  --  0.0.0.0/0            0.0.0.0/0            ctstate RELATED,ESTABLISHED
+DOCKER     all  --  0.0.0.0/0            0.0.0.0/0           
+ACCEPT     all  --  0.0.0.0/0            0.0.0.0/0           
+ACCEPT     all  --  0.0.0.0/0            0.0.0.0/0           
+REJECT     all  --  0.0.0.0/0            0.0.0.0/0            reject-with icmp-host-prohibited
+FLANNEL-FWD  all  --  0.0.0.0/0            0.0.0.0/0            /* flanneld forward */
+KUBE-ROUTER-FORWARD  all  --  0.0.0.0/0            0.0.0.0/0            /* kube-router netpol - TEMCG2JMHZYE7H7T */
+KUBE-PROXY-FIREWALL  all  --  0.0.0.0/0            0.0.0.0/0            ctstate NEW /* kubernetes load balancer firewall */
+KUBE-FORWARD  all  --  0.0.0.0/0            0.0.0.0/0            /* kubernetes forwarding rules */
+KUBE-SERVICES  all  --  0.0.0.0/0            0.0.0.0/0            ctstate NEW /* kubernetes service portals */
+KUBE-EXTERNAL-SERVICES  all  --  0.0.0.0/0            0.0.0.0/0            ctstate NEW /* kubernetes externally-visible service portals */
+ACCEPT     all  --  0.0.0.0/0            0.0.0.0/0            /* KUBE-ROUTER rule to explicitly ACCEPT traffic that comply to network policies */ mark match 0x20000/0x20000
+DOCKER-USER  all  --  0.0.0.0/0            0.0.0.0/0           
+DOCKER-ISOLATION-STAGE-1  all  --  0.0.0.0/0            0.0.0.0/0           
+ACCEPT     all  --  0.0.0.0/0            0.0.0.0/0            ctstate RELATED,ESTABLISHED
+DOCKER     all  --  0.0.0.0/0            0.0.0.0/0           
+ACCEPT     all  --  0.0.0.0/0            0.0.0.0/0           
+ACCEPT     all  --  0.0.0.0/0            0.0.0.0/0           
+ACCEPT     all  --  0.0.0.0/0            0.0.0.0/0            ctstate RELATED,ESTABLISHED
+DOCKER     all  --  0.0.0.0/0            0.0.0.0/0           
+ACCEPT     all  --  0.0.0.0/0            0.0.0.0/0           
+ACCEPT     all  --  0.0.0.0/0            0.0.0.0/0           
+REJECT     all  --  0.0.0.0/0            0.0.0.0/0            reject-with icmp-host-prohibited
+FLANNEL-FWD  all  --  0.0.0.0/0            0.0.0.0/0            /* flanneld forward */
+
+Chain OUTPUT (policy ACCEPT)
+target     prot opt source               destination         
+KUBE-ROUTER-OUTPUT  all  --  0.0.0.0/0            0.0.0.0/0            /* kube-router netpol - VEAAIY32XVBHCSCY */
+KUBE-PROXY-FIREWALL  all  --  0.0.0.0/0            0.0.0.0/0            ctstate NEW /* kubernetes load balancer firewall */
+KUBE-SERVICES  all  --  0.0.0.0/0            0.0.0.0/0            ctstate NEW /* kubernetes service portals */
+KUBE-FIREWALL  all  --  0.0.0.0/0            0.0.0.0/0           
+ACCEPT     all  --  0.0.0.0/0            0.0.0.0/0            /* KUBE-ROUTER rule to explicitly ACCEPT traffic that comply to network policies */ mark match 0x20000/0x20000
+InstanceServices  all  --  0.0.0.0/0            169.254.0.0/16      
+KUBE-ROUTER-OUTPUT  all  --  0.0.0.0/0            0.0.0.0/0            /* kube-router netpol - VEAAIY32XVBHCSCY */
+KUBE-PROXY-FIREWALL  all  --  0.0.0.0/0            0.0.0.0/0            ctstate NEW /* kubernetes load balancer firewall */
+KUBE-SERVICES  all  --  0.0.0.0/0            0.0.0.0/0            ctstate NEW /* kubernetes service portals */
+KUBE-FIREWALL  all  --  0.0.0.0/0            0.0.0.0/0           
+ACCEPT     all  --  0.0.0.0/0            0.0.0.0/0            /* KUBE-ROUTER rule to explicitly ACCEPT traffic that comply to network policies */ mark match 0x20000/0x20000
+InstanceServices  all  --  0.0.0.0/0            169.254.0.0/16      
+KUBE-ROUTER-OUTPUT  all  --  0.0.0.0/0            0.0.0.0/0            /* kube-router netpol - VEAAIY32XVBHCSCY */
+KUBE-PROXY-FIREWALL  all  --  0.0.0.0/0            0.0.0.0/0            ctstate NEW /* kubernetes load balancer firewall */
+KUBE-SERVICES  all  --  0.0.0.0/0            0.0.0.0/0            ctstate NEW /* kubernetes service portals */
+KUBE-FIREWALL  all  --  0.0.0.0/0            0.0.0.0/0           
+ACCEPT     all  --  0.0.0.0/0            0.0.0.0/0            /* KUBE-ROUTER rule to explicitly ACCEPT traffic that comply to network policies */ mark match 0x20000/0x20000
+InstanceServices  all  --  0.0.0.0/0            169.254.0.0/16      
+KUBE-ROUTER-OUTPUT  all  --  0.0.0.0/0            0.0.0.0/0            /* kube-router netpol - VEAAIY32XVBHCSCY */
+KUBE-PROXY-FIREWALL  all  --  0.0.0.0/0            0.0.0.0/0            ctstate NEW /* kubernetes load balancer firewall */
+KUBE-SERVICES  all  --  0.0.0.0/0            0.0.0.0/0            ctstate NEW /* kubernetes service portals */
+KUBE-FIREWALL  all  --  0.0.0.0/0            0.0.0.0/0           
+ACCEPT     all  --  0.0.0.0/0            0.0.0.0/0            /* KUBE-ROUTER rule to explicitly ACCEPT traffic that comply to network policies */ mark match 0x20000/0x20000
+InstanceServices  all  --  0.0.0.0/0            169.254.0.0/16      
+
+Chain DOCKER (8 references)
+target     prot opt source               destination         
+ACCEPT     tcp  --  0.0.0.0/0            172.18.0.2           tcp dpt:5432
+
+Chain DOCKER-ISOLATION-STAGE-1 (4 references)
+target     prot opt source               destination         
+DOCKER-ISOLATION-STAGE-2  all  --  0.0.0.0/0            0.0.0.0/0           
+DOCKER-ISOLATION-STAGE-2  all  --  0.0.0.0/0            0.0.0.0/0           
+RETURN     all  --  0.0.0.0/0            0.0.0.0/0           
+
+Chain DOCKER-ISOLATION-STAGE-2 (2 references)
+target     prot opt source               destination         
+DROP       all  --  0.0.0.0/0            0.0.0.0/0           
+DROP       all  --  0.0.0.0/0            0.0.0.0/0           
+RETURN     all  --  0.0.0.0/0            0.0.0.0/0           
+
+Chain DOCKER-USER (4 references)
+target     prot opt source               destination         
+RETURN     all  --  0.0.0.0/0            0.0.0.0/0           
+
+Chain FLANNEL-FWD (4 references)
+target     prot opt source               destination         
+ACCEPT     all  --  10.42.0.0/16         0.0.0.0/0            /* flanneld forward */
+ACCEPT     all  --  0.0.0.0/0            10.42.0.0/16         /* flanneld forward */
+
+Chain InstanceServices (4 references)
+target     prot opt source               destination         
+ACCEPT     tcp  --  0.0.0.0/0            169.254.0.2          owner UID match 0 tcp dpt:3260 /* See the Oracle-Provided Images section in the Oracle Cloud Infrastructure documentation for security impact of modifying or removing this rule */
+ACCEPT     tcp  --  0.0.0.0/0            169.254.2.0/24       owner UID match 0 tcp dpt:3260 /* See the Oracle-Provided Images section in the Oracle Cloud Infrastructure documentation for security impact of modifying or removing this rule */
+ACCEPT     tcp  --  0.0.0.0/0            169.254.4.0/24       owner UID match 0 tcp dpt:3260 /* See the Oracle-Provided Images section in the Oracle Cloud Infrastructure documentation for security impact of modifying or removing this rule */
+ACCEPT     tcp  --  0.0.0.0/0            169.254.5.0/24       owner UID match 0 tcp dpt:3260 /* See the Oracle-Provided Images section in the Oracle Cloud Infrastructure documentation for security impact of modifying or removing this rule */
+ACCEPT     tcp  --  0.0.0.0/0            169.254.0.2          tcp dpt:80 /* See the Oracle-Provided Images section in the Oracle Cloud Infrastructure documentation for security impact of modifying or removing this rule */
+ACCEPT     udp  --  0.0.0.0/0            169.254.169.254      udp dpt:53 /* See the Oracle-Provided Images section in the Oracle Cloud Infrastructure documentation for security impact of modifying or removing this rule */
+ACCEPT     tcp  --  0.0.0.0/0            169.254.169.254      tcp dpt:53 /* See the Oracle-Provided Images section in the Oracle Cloud Infrastructure documentation for security impact of modifying or removing this rule */
+ACCEPT     tcp  --  0.0.0.0/0            169.254.0.3          owner UID match 0 tcp dpt:80 /* See the Oracle-Provided Images section in the Oracle Cloud Infrastructure documentation for security impact of modifying or removing this rule */
+ACCEPT     tcp  --  0.0.0.0/0            169.254.0.4          tcp dpt:80 /* See the Oracle-Provided Images section in the Oracle Cloud Infrastructure documentation for security impact of modifying or removing this rule */
+ACCEPT     tcp  --  0.0.0.0/0            169.254.169.254      tcp dpt:80 /* See the Oracle-Provided Images section in the Oracle Cloud Infrastructure documentation for security impact of modifying or removing this rule */
+ACCEPT     udp  --  0.0.0.0/0            169.254.169.254      udp dpt:67 /* See the Oracle-Provided Images section in the Oracle Cloud Infrastructure documentation for security impact of modifying or removing this rule */
+ACCEPT     udp  --  0.0.0.0/0            169.254.169.254      udp dpt:69 /* See the Oracle-Provided Images section in the Oracle Cloud Infrastructure documentation for security impact of modifying or removing this rule */
+ACCEPT     udp  --  0.0.0.0/0            169.254.169.254      udp dpt:123 /* See the Oracle-Provided Images section in the Oracle Cloud Infrastructure documentation for security impact of modifying or removing this rule */
+REJECT     tcp  --  0.0.0.0/0            169.254.0.0/16       tcp /* See the Oracle-Provided Images section in the Oracle Cloud Infrastructure documentation for security impact of modifying or removing this rule */ reject-with tcp-reset
+REJECT     udp  --  0.0.0.0/0            169.254.0.0/16       udp /* See the Oracle-Provided Images section in the Oracle Cloud Infrastructure documentation for security impact of modifying or removing this rule */ reject-with icmp-port-unreachable
+
+Chain KUBE-EXTERNAL-SERVICES (8 references)
+target     prot opt source               destination         
+
+Chain KUBE-FIREWALL (8 references)
+target     prot opt source               destination         
+DROP       all  -- !127.0.0.0/8          127.0.0.0/8          /* block incoming localnet connections */ ! ctstate RELATED,ESTABLISHED,DNAT
+
+Chain KUBE-FORWARD (4 references)
+target     prot opt source               destination         
+DROP       all  --  0.0.0.0/0            0.0.0.0/0            ctstate INVALID nfacct-name  ct_state_invalid_dropped_pkts
+ACCEPT     all  --  0.0.0.0/0            0.0.0.0/0            /* kubernetes forwarding rules */ mark match 0x4000/0x4000
+ACCEPT     all  --  0.0.0.0/0            0.0.0.0/0            /* kubernetes forwarding conntrack rule */ ctstate RELATED,ESTABLISHED
+
+Chain KUBE-KUBELET-CANARY (0 references)
+target     prot opt source               destination         
+
+Chain KUBE-NODEPORTS (4 references)
+target     prot opt source               destination         
+ACCEPT     tcp  --  0.0.0.0/0            0.0.0.0/0            /* ingress-nginx/ingress-nginx-controller:https health check node port */ tcp dpt:30981
+ACCEPT     tcp  --  0.0.0.0/0            0.0.0.0/0            /* ingress-nginx/ingress-nginx-controller:http health check node port */ tcp dpt:30981
+
+Chain KUBE-NWPLCY-COMMON (10 references)
+target     prot opt source               destination         
+DROP       all  --  0.0.0.0/0            0.0.0.0/0            /* "rule to drop invalid state for pod" */ ctstate INVALID
+ACCEPT     all  --  0.0.0.0/0            0.0.0.0/0            /* "rule for stateful firewall for pod" */ ctstate RELATED,ESTABLISHED
+ACCEPT     icmp --  0.0.0.0/0            0.0.0.0/0            /* allow icmp echo requests */ icmptype 8
+ACCEPT     icmp --  0.0.0.0/0            0.0.0.0/0            /* allow icmp destination unreachable messages */ icmptype 3
+ACCEPT     icmp --  0.0.0.0/0            0.0.0.0/0            /* allow icmp time exceeded messages */ icmptype 11
+
+Chain KUBE-NWPLCY-DEFAULT (20 references)
+target     prot opt source               destination         
+MARK       all  --  0.0.0.0/0            0.0.0.0/0            /* rule to mark traffic matching a network policy */ MARK or 0x10000
+
+Chain KUBE-POD-FW-6CYQ7KZTD2JMVR3A (7 references)
+target     prot opt source               destination         
+KUBE-NWPLCY-COMMON  all  --  0.0.0.0/0            0.0.0.0/0            /* common bi-directional traffic policy rules */
+ACCEPT     all  --  0.0.0.0/0            10.42.0.25           /* rule to permit the traffic traffic to pods when source is the pod's local node */ ADDRTYPE match src-type LOCAL
+KUBE-NWPLCY-DEFAULT  all  --  10.42.0.25           0.0.0.0/0            /* run through default egress network policy chain */
+KUBE-NWPLCY-DEFAULT  all  --  0.0.0.0/0            10.42.0.25           /* run through default ingress network policy chain */
+NFLOG      all  --  0.0.0.0/0            0.0.0.0/0            /* rule to log dropped traffic POD name:traefik-c5c8bf4ff-4q7ck namespace: kube-system */ mark match ! 0x10000/0x10000 limit: avg 10/min burst 10 nflog-group 100
+REJECT     all  --  0.0.0.0/0            0.0.0.0/0            /* rule to REJECT traffic destined for POD name:traefik-c5c8bf4ff-4q7ck namespace: kube-system */ mark match ! 0x10000/0x10000 reject-with icmp-port-unreachable
+MARK       all  --  0.0.0.0/0            0.0.0.0/0            MARK and 0xfffeffff
+MARK       all  --  0.0.0.0/0            0.0.0.0/0            /* set mark to ACCEPT traffic that comply to network policies */ MARK or 0x20000
+
+Chain KUBE-POD-FW-C5TKNMZN7WK5JHP3 (7 references)
+target     prot opt source               destination         
+KUBE-NWPLCY-COMMON  all  --  0.0.0.0/0            0.0.0.0/0            /* common bi-directional traffic policy rules */
+ACCEPT     all  --  0.0.0.0/0            10.42.0.21           /* rule to permit the traffic traffic to pods when source is the pod's local node */ ADDRTYPE match src-type LOCAL
+KUBE-NWPLCY-DEFAULT  all  --  10.42.0.21           0.0.0.0/0            /* run through default egress network policy chain */
+KUBE-NWPLCY-DEFAULT  all  --  0.0.0.0/0            10.42.0.21           /* run through default ingress network policy chain */
+NFLOG      all  --  0.0.0.0/0            0.0.0.0/0            /* rule to log dropped traffic POD name:svclb-traefik-0c98f5da-vz97j namespace: kube-system */ mark match ! 0x10000/0x10000 limit: avg 10/min burst 10 nflog-group 100
+REJECT     all  --  0.0.0.0/0            0.0.0.0/0            /* rule to REJECT traffic destined for POD name:svclb-traefik-0c98f5da-vz97j namespace: kube-system */ mark match ! 0x10000/0x10000 reject-with icmp-port-unreachable
+MARK       all  --  0.0.0.0/0            0.0.0.0/0            MARK and 0xfffeffff
+MARK       all  --  0.0.0.0/0            0.0.0.0/0            /* set mark to ACCEPT traffic that comply to network policies */ MARK or 0x20000
+
+Chain KUBE-POD-FW-FNJX3CJHIJ65OB5T (7 references)
+target     prot opt source               destination         
+KUBE-NWPLCY-COMMON  all  --  0.0.0.0/0            0.0.0.0/0            /* common bi-directional traffic policy rules */
+ACCEPT     all  --  0.0.0.0/0            10.42.0.26           /* rule to permit the traffic traffic to pods when source is the pod's local node */ ADDRTYPE match src-type LOCAL
+KUBE-NWPLCY-DEFAULT  all  --  10.42.0.26           0.0.0.0/0            /* run through default egress network policy chain */
+KUBE-NWPLCY-DEFAULT  all  --  0.0.0.0/0            10.42.0.26           /* run through default ingress network policy chain */
+NFLOG      all  --  0.0.0.0/0            0.0.0.0/0            /* rule to log dropped traffic POD name:postgres-65fdbf9494-xpwrz namespace: hee2hee */ mark match ! 0x10000/0x10000 limit: avg 10/min burst 10 nflog-group 100
+REJECT     all  --  0.0.0.0/0            0.0.0.0/0            /* rule to REJECT traffic destined for POD name:postgres-65fdbf9494-xpwrz namespace: hee2hee */ mark match ! 0x10000/0x10000 reject-with icmp-port-unreachable
+MARK       all  --  0.0.0.0/0            0.0.0.0/0            MARK and 0xfffeffff
+MARK       all  --  0.0.0.0/0            0.0.0.0/0            /* set mark to ACCEPT traffic that comply to network policies */ MARK or 0x20000
+
+Chain KUBE-POD-FW-H5Z35BOCBDXUYH7F (7 references)
+target     prot opt source               destination         
+KUBE-NWPLCY-COMMON  all  --  0.0.0.0/0            0.0.0.0/0            /* common bi-directional traffic policy rules */
+ACCEPT     all  --  0.0.0.0/0            10.42.0.22           /* rule to permit the traffic traffic to pods when source is the pod's local node */ ADDRTYPE match src-type LOCAL
+KUBE-NWPLCY-DEFAULT  all  --  10.42.0.22           0.0.0.0/0            /* run through default egress network policy chain */
+KUBE-NWPLCY-DEFAULT  all  --  0.0.0.0/0            10.42.0.22           /* run through default ingress network policy chain */
+NFLOG      all  --  0.0.0.0/0            0.0.0.0/0            /* rule to log dropped traffic POD name:local-path-provisioner-8686667995-9b4gp namespace: kube-system */ mark match ! 0x10000/0x10000 limit: avg 10/min burst 10 nflog-group 100
+REJECT     all  --  0.0.0.0/0            0.0.0.0/0            /* rule to REJECT traffic destined for POD name:local-path-provisioner-8686667995-9b4gp namespace: kube-system */ mark match ! 0x10000/0x10000 reject-with icmp-port-unreachable
+MARK       all  --  0.0.0.0/0            0.0.0.0/0            MARK and 0xfffeffff
+MARK       all  --  0.0.0.0/0            0.0.0.0/0            /* set mark to ACCEPT traffic that comply to network policies */ MARK or 0x20000
+
+Chain KUBE-POD-FW-IZ4FQBGQXKFPKRYO (7 references)
+target     prot opt source               destination         
+KUBE-NWPLCY-COMMON  all  --  0.0.0.0/0            0.0.0.0/0            /* common bi-directional traffic policy rules */
+ACCEPT     all  --  0.0.0.0/0            10.42.0.28           /* rule to permit the traffic traffic to pods when source is the pod's local node */ ADDRTYPE match src-type LOCAL
+KUBE-NWPLCY-DEFAULT  all  --  10.42.0.28           0.0.0.0/0            /* run through default egress network policy chain */
+KUBE-NWPLCY-DEFAULT  all  --  0.0.0.0/0            10.42.0.28           /* run through default ingress network policy chain */
+NFLOG      all  --  0.0.0.0/0            0.0.0.0/0            /* rule to log dropped traffic POD name:svclb-postgresql-service-6e0c1479-752p9 namespace: kube-system */ mark match ! 0x10000/0x10000 limit: avg 10/min burst 10 nflog-group 100
+REJECT     all  --  0.0.0.0/0            0.0.0.0/0            /* rule to REJECT traffic destined for POD name:svclb-postgresql-service-6e0c1479-752p9 namespace: kube-system */ mark match ! 0x10000/0x10000 reject-with icmp-port-unreachable
+MARK       all  --  0.0.0.0/0            0.0.0.0/0            MARK and 0xfffeffff
+MARK       all  --  0.0.0.0/0            0.0.0.0/0            /* set mark to ACCEPT traffic that comply to network policies */ MARK or 0x20000
+
+Chain KUBE-POD-FW-LCJCCGT73M22L5YO (7 references)
+target     prot opt source               destination         
+KUBE-NWPLCY-COMMON  all  --  0.0.0.0/0            0.0.0.0/0            /* common bi-directional traffic policy rules */
+ACCEPT     all  --  0.0.0.0/0            10.42.0.27           /* rule to permit the traffic traffic to pods when source is the pod's local node */ ADDRTYPE match src-type LOCAL
+KUBE-NWPLCY-DEFAULT  all  --  10.42.0.27           0.0.0.0/0            /* run through default egress network policy chain */
+KUBE-NWPLCY-DEFAULT  all  --  0.0.0.0/0            10.42.0.27           /* run through default ingress network policy chain */
+NFLOG      all  --  0.0.0.0/0            0.0.0.0/0            /* rule to log dropped traffic POD name:ingress-nginx-controller-86c5998465-ngk58 namespace: ingress-nginx */ mark match ! 0x10000/0x10000 limit: avg 10/min burst 10 nflog-group 100
+REJECT     all  --  0.0.0.0/0            0.0.0.0/0            /* rule to REJECT traffic destined for POD name:ingress-nginx-controller-86c5998465-ngk58 namespace: ingress-nginx */ mark match ! 0x10000/0x10000 reject-with icmp-port-unreachable
+MARK       all  --  0.0.0.0/0            0.0.0.0/0            MARK and 0xfffeffff
+MARK       all  --  0.0.0.0/0            0.0.0.0/0            /* set mark to ACCEPT traffic that comply to network policies */ MARK or 0x20000
+
+Chain KUBE-POD-FW-Q7J4HNBB6MBONJ4C (7 references)
+target     prot opt source               destination         
+KUBE-NWPLCY-COMMON  all  --  0.0.0.0/0            0.0.0.0/0            /* common bi-directional traffic policy rules */
+ACCEPT     all  --  0.0.0.0/0            10.42.0.32           /* rule to permit the traffic traffic to pods when source is the pod's local node */ ADDRTYPE match src-type LOCAL
+KUBE-NWPLCY-DEFAULT  all  --  10.42.0.32           0.0.0.0/0            /* run through default egress network policy chain */
+KUBE-NWPLCY-DEFAULT  all  --  0.0.0.0/0            10.42.0.32           /* run through default ingress network policy chain */
+NFLOG      all  --  0.0.0.0/0            0.0.0.0/0            /* rule to log dropped traffic POD name:mysql-db-6cc98c89f7-rw789 namespace: hee2hee */ mark match ! 0x10000/0x10000 limit: avg 10/min burst 10 nflog-group 100
+REJECT     all  --  0.0.0.0/0            0.0.0.0/0            /* rule to REJECT traffic destined for POD name:mysql-db-6cc98c89f7-rw789 namespace: hee2hee */ mark match ! 0x10000/0x10000 reject-with icmp-port-unreachable
+MARK       all  --  0.0.0.0/0            0.0.0.0/0            MARK and 0xfffeffff
+MARK       all  --  0.0.0.0/0            0.0.0.0/0            /* set mark to ACCEPT traffic that comply to network policies */ MARK or 0x20000
+
+Chain KUBE-POD-FW-RU6SEKBBEDB4ZAZT (7 references)
+target     prot opt source               destination         
+KUBE-NWPLCY-COMMON  all  --  0.0.0.0/0            0.0.0.0/0            /* common bi-directional traffic policy rules */
+ACCEPT     all  --  0.0.0.0/0            10.42.0.23           /* rule to permit the traffic traffic to pods when source is the pod's local node */ ADDRTYPE match src-type LOCAL
+KUBE-NWPLCY-DEFAULT  all  --  10.42.0.23           0.0.0.0/0            /* run through default egress network policy chain */
+KUBE-NWPLCY-DEFAULT  all  --  0.0.0.0/0            10.42.0.23           /* run through default ingress network policy chain */
+NFLOG      all  --  0.0.0.0/0            0.0.0.0/0            /* rule to log dropped traffic POD name:coredns-76c974cb66-zsdbb namespace: kube-system */ mark match ! 0x10000/0x10000 limit: avg 10/min burst 10 nflog-group 100
+REJECT     all  --  0.0.0.0/0            0.0.0.0/0            /* rule to REJECT traffic destined for POD name:coredns-76c974cb66-zsdbb namespace: kube-system */ mark match ! 0x10000/0x10000 reject-with icmp-port-unreachable
+MARK       all  --  0.0.0.0/0            0.0.0.0/0            MARK and 0xfffeffff
+MARK       all  --  0.0.0.0/0            0.0.0.0/0            /* set mark to ACCEPT traffic that comply to network policies */ MARK or 0x20000
+
+Chain KUBE-POD-FW-VNPPWYYNFX4NYFZ5 (7 references)
+target     prot opt source               destination         
+KUBE-NWPLCY-COMMON  all  --  0.0.0.0/0            0.0.0.0/0            /* common bi-directional traffic policy rules */
+ACCEPT     all  --  0.0.0.0/0            10.42.0.24           /* rule to permit the traffic traffic to pods when source is the pod's local node */ ADDRTYPE match src-type LOCAL
+KUBE-NWPLCY-DEFAULT  all  --  10.42.0.24           0.0.0.0/0            /* run through default egress network policy chain */
+KUBE-NWPLCY-DEFAULT  all  --  0.0.0.0/0            10.42.0.24           /* run through default ingress network policy chain */
+NFLOG      all  --  0.0.0.0/0            0.0.0.0/0            /* rule to log dropped traffic POD name:metrics-server-c8774f4f4-mx6hw namespace: kube-system */ mark match ! 0x10000/0x10000 limit: avg 10/min burst 10 nflog-group 100
+REJECT     all  --  0.0.0.0/0            0.0.0.0/0            /* rule to REJECT traffic destined for POD name:metrics-server-c8774f4f4-mx6hw namespace: kube-system */ mark match ! 0x10000/0x10000 reject-with icmp-port-unreachable
+MARK       all  --  0.0.0.0/0            0.0.0.0/0            MARK and 0xfffeffff
+MARK       all  --  0.0.0.0/0            0.0.0.0/0            /* set mark to ACCEPT traffic that comply to network policies */ MARK or 0x20000
+
+Chain KUBE-POD-FW-YDXJKBHGHTFWKQ3V (7 references)
+target     prot opt source               destination         
+KUBE-NWPLCY-COMMON  all  --  0.0.0.0/0            0.0.0.0/0            /* common bi-directional traffic policy rules */
+ACCEPT     all  --  0.0.0.0/0            10.42.0.31           /* rule to permit the traffic traffic to pods when source is the pod's local node */ ADDRTYPE match src-type LOCAL
+KUBE-NWPLCY-DEFAULT  all  --  10.42.0.31           0.0.0.0/0            /* run through default egress network policy chain */
+KUBE-NWPLCY-DEFAULT  all  --  0.0.0.0/0            10.42.0.31           /* run through default ingress network policy chain */
+NFLOG      all  --  0.0.0.0/0            0.0.0.0/0            /* rule to log dropped traffic POD name:svclb-mysql-svc-f0e50de1-knhtz namespace: kube-system */ mark match ! 0x10000/0x10000 limit: avg 10/min burst 10 nflog-group 100
+REJECT     all  --  0.0.0.0/0            0.0.0.0/0            /* rule to REJECT traffic destined for POD name:svclb-mysql-svc-f0e50de1-knhtz namespace: kube-system */ mark match ! 0x10000/0x10000 reject-with icmp-port-unreachable
+MARK       all  --  0.0.0.0/0            0.0.0.0/0            MARK and 0xfffeffff
+MARK       all  --  0.0.0.0/0            0.0.0.0/0            /* set mark to ACCEPT traffic that comply to network policies */ MARK or 0x20000
+
+Chain KUBE-PROXY-CANARY (0 references)
+target     prot opt source               destination         
+
+Chain KUBE-PROXY-FIREWALL (12 references)
+target     prot opt source               destination         
+
+Chain KUBE-ROUTER-FORWARD (4 references)
+target     prot opt source               destination         
+KUBE-POD-FW-Q7J4HNBB6MBONJ4C  all  --  0.0.0.0/0            10.42.0.32           /* rule to jump traffic destined to POD name:mysql-db-6cc98c89f7-rw789 namespace: hee2hee to chain KUBE-POD-FW-Q7J4HNBB6MBONJ4C */
+KUBE-POD-FW-Q7J4HNBB6MBONJ4C  all  --  0.0.0.0/0            10.42.0.32           PHYSDEV match --physdev-is-bridged /* rule to jump traffic destined to POD name:mysql-db-6cc98c89f7-rw789 namespace: hee2hee to chain KUBE-POD-FW-Q7J4HNBB6MBONJ4C */
+KUBE-POD-FW-Q7J4HNBB6MBONJ4C  all  --  10.42.0.32           0.0.0.0/0            /* rule to jump traffic from POD name:mysql-db-6cc98c89f7-rw789 namespace: hee2hee to chain KUBE-POD-FW-Q7J4HNBB6MBONJ4C */
+KUBE-POD-FW-Q7J4HNBB6MBONJ4C  all  --  10.42.0.32           0.0.0.0/0            PHYSDEV match --physdev-is-bridged /* rule to jump traffic from POD name:mysql-db-6cc98c89f7-rw789 namespace: hee2hee to chain KUBE-POD-FW-Q7J4HNBB6MBONJ4C */
+KUBE-POD-FW-RU6SEKBBEDB4ZAZT  all  --  0.0.0.0/0            10.42.0.23           /* rule to jump traffic destined to POD name:coredns-76c974cb66-zsdbb namespace: kube-system to chain KUBE-POD-FW-RU6SEKBBEDB4ZAZT */
+KUBE-POD-FW-RU6SEKBBEDB4ZAZT  all  --  0.0.0.0/0            10.42.0.23           PHYSDEV match --physdev-is-bridged /* rule to jump traffic destined to POD name:coredns-76c974cb66-zsdbb namespace: kube-system to chain KUBE-POD-FW-RU6SEKBBEDB4ZAZT */
+KUBE-POD-FW-RU6SEKBBEDB4ZAZT  all  --  10.42.0.23           0.0.0.0/0            /* rule to jump traffic from POD name:coredns-76c974cb66-zsdbb namespace: kube-system to chain KUBE-POD-FW-RU6SEKBBEDB4ZAZT */
+KUBE-POD-FW-RU6SEKBBEDB4ZAZT  all  --  10.42.0.23           0.0.0.0/0            PHYSDEV match --physdev-is-bridged /* rule to jump traffic from POD name:coredns-76c974cb66-zsdbb namespace: kube-system to chain KUBE-POD-FW-RU6SEKBBEDB4ZAZT */
+KUBE-POD-FW-FNJX3CJHIJ65OB5T  all  --  0.0.0.0/0            10.42.0.26           /* rule to jump traffic destined to POD name:postgres-65fdbf9494-xpwrz namespace: hee2hee to chain KUBE-POD-FW-FNJX3CJHIJ65OB5T */
+KUBE-POD-FW-FNJX3CJHIJ65OB5T  all  --  0.0.0.0/0            10.42.0.26           PHYSDEV match --physdev-is-bridged /* rule to jump traffic destined to POD name:postgres-65fdbf9494-xpwrz namespace: hee2hee to chain KUBE-POD-FW-FNJX3CJHIJ65OB5T */
+KUBE-POD-FW-FNJX3CJHIJ65OB5T  all  --  10.42.0.26           0.0.0.0/0            /* rule to jump traffic from POD name:postgres-65fdbf9494-xpwrz namespace: hee2hee to chain KUBE-POD-FW-FNJX3CJHIJ65OB5T */
+KUBE-POD-FW-FNJX3CJHIJ65OB5T  all  --  10.42.0.26           0.0.0.0/0            PHYSDEV match --physdev-is-bridged /* rule to jump traffic from POD name:postgres-65fdbf9494-xpwrz namespace: hee2hee to chain KUBE-POD-FW-FNJX3CJHIJ65OB5T */
+KUBE-POD-FW-LCJCCGT73M22L5YO  all  --  0.0.0.0/0            10.42.0.27           /* rule to jump traffic destined to POD name:ingress-nginx-controller-86c5998465-ngk58 namespace: ingress-nginx to chain KUBE-POD-FW-LCJCCGT73M22L5YO */
+KUBE-POD-FW-LCJCCGT73M22L5YO  all  --  0.0.0.0/0            10.42.0.27           PHYSDEV match --physdev-is-bridged /* rule to jump traffic destined to POD name:ingress-nginx-controller-86c5998465-ngk58 namespace: ingress-nginx to chain KUBE-POD-FW-LCJCCGT73M22L5YO */
+KUBE-POD-FW-LCJCCGT73M22L5YO  all  --  10.42.0.27           0.0.0.0/0            /* rule to jump traffic from POD name:ingress-nginx-controller-86c5998465-ngk58 namespace: ingress-nginx to chain KUBE-POD-FW-LCJCCGT73M22L5YO */
+KUBE-POD-FW-LCJCCGT73M22L5YO  all  --  10.42.0.27           0.0.0.0/0            PHYSDEV match --physdev-is-bridged /* rule to jump traffic from POD name:ingress-nginx-controller-86c5998465-ngk58 namespace: ingress-nginx to chain KUBE-POD-FW-LCJCCGT73M22L5YO */
+KUBE-POD-FW-6CYQ7KZTD2JMVR3A  all  --  0.0.0.0/0            10.42.0.25           /* rule to jump traffic destined to POD name:traefik-c5c8bf4ff-4q7ck namespace: kube-system to chain KUBE-POD-FW-6CYQ7KZTD2JMVR3A */
+KUBE-POD-FW-6CYQ7KZTD2JMVR3A  all  --  0.0.0.0/0            10.42.0.25           PHYSDEV match --physdev-is-bridged /* rule to jump traffic destined to POD name:traefik-c5c8bf4ff-4q7ck namespace: kube-system to chain KUBE-POD-FW-6CYQ7KZTD2JMVR3A */
+KUBE-POD-FW-6CYQ7KZTD2JMVR3A  all  --  10.42.0.25           0.0.0.0/0            /* rule to jump traffic from POD name:traefik-c5c8bf4ff-4q7ck namespace: kube-system to chain KUBE-POD-FW-6CYQ7KZTD2JMVR3A */
+KUBE-POD-FW-6CYQ7KZTD2JMVR3A  all  --  10.42.0.25           0.0.0.0/0            PHYSDEV match --physdev-is-bridged /* rule to jump traffic from POD name:traefik-c5c8bf4ff-4q7ck namespace: kube-system to chain KUBE-POD-FW-6CYQ7KZTD2JMVR3A */
+KUBE-POD-FW-H5Z35BOCBDXUYH7F  all  --  0.0.0.0/0            10.42.0.22           /* rule to jump traffic destined to POD name:local-path-provisioner-8686667995-9b4gp namespace: kube-system to chain KUBE-POD-FW-H5Z35BOCBDXUYH7F */
+KUBE-POD-FW-H5Z35BOCBDXUYH7F  all  --  0.0.0.0/0            10.42.0.22           PHYSDEV match --physdev-is-bridged /* rule to jump traffic destined to POD name:local-path-provisioner-8686667995-9b4gp namespace: kube-system to chain KUBE-POD-FW-H5Z35BOCBDXUYH7F */
+KUBE-POD-FW-H5Z35BOCBDXUYH7F  all  --  10.42.0.22           0.0.0.0/0            /* rule to jump traffic from POD name:local-path-provisioner-8686667995-9b4gp namespace: kube-system to chain KUBE-POD-FW-H5Z35BOCBDXUYH7F */
+KUBE-POD-FW-H5Z35BOCBDXUYH7F  all  --  10.42.0.22           0.0.0.0/0            PHYSDEV match --physdev-is-bridged /* rule to jump traffic from POD name:local-path-provisioner-8686667995-9b4gp namespace: kube-system to chain KUBE-POD-FW-H5Z35BOCBDXUYH7F */
+KUBE-POD-FW-C5TKNMZN7WK5JHP3  all  --  0.0.0.0/0            10.42.0.21           /* rule to jump traffic destined to POD name:svclb-traefik-0c98f5da-vz97j namespace: kube-system to chain KUBE-POD-FW-C5TKNMZN7WK5JHP3 */
+KUBE-POD-FW-C5TKNMZN7WK5JHP3  all  --  0.0.0.0/0            10.42.0.21           PHYSDEV match --physdev-is-bridged /* rule to jump traffic destined to POD name:svclb-traefik-0c98f5da-vz97j namespace: kube-system to chain KUBE-POD-FW-C5TKNMZN7WK5JHP3 */
+KUBE-POD-FW-C5TKNMZN7WK5JHP3  all  --  10.42.0.21           0.0.0.0/0            /* rule to jump traffic from POD name:svclb-traefik-0c98f5da-vz97j namespace: kube-system to chain KUBE-POD-FW-C5TKNMZN7WK5JHP3 */
+KUBE-POD-FW-C5TKNMZN7WK5JHP3  all  --  10.42.0.21           0.0.0.0/0            PHYSDEV match --physdev-is-bridged /* rule to jump traffic from POD name:svclb-traefik-0c98f5da-vz97j namespace: kube-system to chain KUBE-POD-FW-C5TKNMZN7WK5JHP3 */
+KUBE-POD-FW-VNPPWYYNFX4NYFZ5  all  --  0.0.0.0/0            10.42.0.24           /* rule to jump traffic destined to POD name:metrics-server-c8774f4f4-mx6hw namespace: kube-system to chain KUBE-POD-FW-VNPPWYYNFX4NYFZ5 */
+KUBE-POD-FW-VNPPWYYNFX4NYFZ5  all  --  0.0.0.0/0            10.42.0.24           PHYSDEV match --physdev-is-bridged /* rule to jump traffic destined to POD name:metrics-server-c8774f4f4-mx6hw namespace: kube-system to chain KUBE-POD-FW-VNPPWYYNFX4NYFZ5 */
+KUBE-POD-FW-VNPPWYYNFX4NYFZ5  all  --  10.42.0.24           0.0.0.0/0            /* rule to jump traffic from POD name:metrics-server-c8774f4f4-mx6hw namespace: kube-system to chain KUBE-POD-FW-VNPPWYYNFX4NYFZ5 */
+KUBE-POD-FW-VNPPWYYNFX4NYFZ5  all  --  10.42.0.24           0.0.0.0/0            PHYSDEV match --physdev-is-bridged /* rule to jump traffic from POD name:metrics-server-c8774f4f4-mx6hw namespace: kube-system to chain KUBE-POD-FW-VNPPWYYNFX4NYFZ5 */
+KUBE-POD-FW-IZ4FQBGQXKFPKRYO  all  --  0.0.0.0/0            10.42.0.28           /* rule to jump traffic destined to POD name:svclb-postgresql-service-6e0c1479-752p9 namespace: kube-system to chain KUBE-POD-FW-IZ4FQBGQXKFPKRYO */
+KUBE-POD-FW-IZ4FQBGQXKFPKRYO  all  --  0.0.0.0/0            10.42.0.28           PHYSDEV match --physdev-is-bridged /* rule to jump traffic destined to POD name:svclb-postgresql-service-6e0c1479-752p9 namespace: kube-system to chain KUBE-POD-FW-IZ4FQBGQXKFPKRYO */
+KUBE-POD-FW-IZ4FQBGQXKFPKRYO  all  --  10.42.0.28           0.0.0.0/0            /* rule to jump traffic from POD name:svclb-postgresql-service-6e0c1479-752p9 namespace: kube-system to chain KUBE-POD-FW-IZ4FQBGQXKFPKRYO */
+KUBE-POD-FW-IZ4FQBGQXKFPKRYO  all  --  10.42.0.28           0.0.0.0/0            PHYSDEV match --physdev-is-bridged /* rule to jump traffic from POD name:svclb-postgresql-service-6e0c1479-752p9 namespace: kube-system to chain KUBE-POD-FW-IZ4FQBGQXKFPKRYO */
+KUBE-POD-FW-YDXJKBHGHTFWKQ3V  all  --  0.0.0.0/0            10.42.0.31           /* rule to jump traffic destined to POD name:svclb-mysql-svc-f0e50de1-knhtz namespace: kube-system to chain KUBE-POD-FW-YDXJKBHGHTFWKQ3V */
+KUBE-POD-FW-YDXJKBHGHTFWKQ3V  all  --  0.0.0.0/0            10.42.0.31           PHYSDEV match --physdev-is-bridged /* rule to jump traffic destined to POD name:svclb-mysql-svc-f0e50de1-knhtz namespace: kube-system to chain KUBE-POD-FW-YDXJKBHGHTFWKQ3V */
+KUBE-POD-FW-YDXJKBHGHTFWKQ3V  all  --  10.42.0.31           0.0.0.0/0            /* rule to jump traffic from POD name:svclb-mysql-svc-f0e50de1-knhtz namespace: kube-system to chain KUBE-POD-FW-YDXJKBHGHTFWKQ3V */
+KUBE-POD-FW-YDXJKBHGHTFWKQ3V  all  --  10.42.0.31           0.0.0.0/0            PHYSDEV match --physdev-is-bridged /* rule to jump traffic from POD name:svclb-mysql-svc-f0e50de1-knhtz namespace: kube-system to chain KUBE-POD-FW-YDXJKBHGHTFWKQ3V */
+
+Chain KUBE-ROUTER-INPUT (4 references)
+target     prot opt source               destination         
+RETURN     all  --  0.0.0.0/0            10.43.0.0/16         /* allow traffic to primary/secondary cluster IP range - EKROEGTNIJ3AP3LC */
+RETURN     tcp  --  0.0.0.0/0            0.0.0.0/0            /* allow LOCAL TCP traffic to node ports - LR7XO7NXDBGQJD2M */ ADDRTYPE match dst-type LOCAL multiport dports 30000:32767
+RETURN     udp  --  0.0.0.0/0            0.0.0.0/0            /* allow LOCAL UDP traffic to node ports - 76UCBPIZNGJNWNUZ */ ADDRTYPE match dst-type LOCAL multiport dports 30000:32767
+KUBE-POD-FW-Q7J4HNBB6MBONJ4C  all  --  10.42.0.32           0.0.0.0/0            /* rule to jump traffic from POD name:mysql-db-6cc98c89f7-rw789 namespace: hee2hee to chain KUBE-POD-FW-Q7J4HNBB6MBONJ4C */
+KUBE-POD-FW-RU6SEKBBEDB4ZAZT  all  --  10.42.0.23           0.0.0.0/0            /* rule to jump traffic from POD name:coredns-76c974cb66-zsdbb namespace: kube-system to chain KUBE-POD-FW-RU6SEKBBEDB4ZAZT */
+KUBE-POD-FW-FNJX3CJHIJ65OB5T  all  --  10.42.0.26           0.0.0.0/0            /* rule to jump traffic from POD name:postgres-65fdbf9494-xpwrz namespace: hee2hee to chain KUBE-POD-FW-FNJX3CJHIJ65OB5T */
+KUBE-POD-FW-LCJCCGT73M22L5YO  all  --  10.42.0.27           0.0.0.0/0            /* rule to jump traffic from POD name:ingress-nginx-controller-86c5998465-ngk58 namespace: ingress-nginx to chain KUBE-POD-FW-LCJCCGT73M22L5YO */
+KUBE-POD-FW-6CYQ7KZTD2JMVR3A  all  --  10.42.0.25           0.0.0.0/0            /* rule to jump traffic from POD name:traefik-c5c8bf4ff-4q7ck namespace: kube-system to chain KUBE-POD-FW-6CYQ7KZTD2JMVR3A */
+KUBE-POD-FW-H5Z35BOCBDXUYH7F  all  --  10.42.0.22           0.0.0.0/0            /* rule to jump traffic from POD name:local-path-provisioner-8686667995-9b4gp namespace: kube-system to chain KUBE-POD-FW-H5Z35BOCBDXUYH7F */
+KUBE-POD-FW-C5TKNMZN7WK5JHP3  all  --  10.42.0.21           0.0.0.0/0            /* rule to jump traffic from POD name:svclb-traefik-0c98f5da-vz97j namespace: kube-system to chain KUBE-POD-FW-C5TKNMZN7WK5JHP3 */
+KUBE-POD-FW-VNPPWYYNFX4NYFZ5  all  --  10.42.0.24           0.0.0.0/0            /* rule to jump traffic from POD name:metrics-server-c8774f4f4-mx6hw namespace: kube-system to chain KUBE-POD-FW-VNPPWYYNFX4NYFZ5 */
+KUBE-POD-FW-IZ4FQBGQXKFPKRYO  all  --  10.42.0.28           0.0.0.0/0            /* rule to jump traffic from POD name:svclb-postgresql-service-6e0c1479-752p9 namespace: kube-system to chain KUBE-POD-FW-IZ4FQBGQXKFPKRYO */
+KUBE-POD-FW-YDXJKBHGHTFWKQ3V  all  --  10.42.0.31           0.0.0.0/0            /* rule to jump traffic from POD name:svclb-mysql-svc-f0e50de1-knhtz namespace: kube-system to chain KUBE-POD-FW-YDXJKBHGHTFWKQ3V */
+
+Chain KUBE-ROUTER-OUTPUT (4 references)
+target     prot opt source               destination         
+KUBE-POD-FW-Q7J4HNBB6MBONJ4C  all  --  0.0.0.0/0            10.42.0.32           /* rule to jump traffic destined to POD name:mysql-db-6cc98c89f7-rw789 namespace: hee2hee to chain KUBE-POD-FW-Q7J4HNBB6MBONJ4C */
+KUBE-POD-FW-Q7J4HNBB6MBONJ4C  all  --  10.42.0.32           0.0.0.0/0            /* rule to jump traffic from POD name:mysql-db-6cc98c89f7-rw789 namespace: hee2hee to chain KUBE-POD-FW-Q7J4HNBB6MBONJ4C */
+KUBE-POD-FW-RU6SEKBBEDB4ZAZT  all  --  0.0.0.0/0            10.42.0.23           /* rule to jump traffic destined to POD name:coredns-76c974cb66-zsdbb namespace: kube-system to chain KUBE-POD-FW-RU6SEKBBEDB4ZAZT */
+KUBE-POD-FW-RU6SEKBBEDB4ZAZT  all  --  10.42.0.23           0.0.0.0/0            /* rule to jump traffic from POD name:coredns-76c974cb66-zsdbb namespace: kube-system to chain KUBE-POD-FW-RU6SEKBBEDB4ZAZT */
+KUBE-POD-FW-FNJX3CJHIJ65OB5T  all  --  0.0.0.0/0            10.42.0.26           /* rule to jump traffic destined to POD name:postgres-65fdbf9494-xpwrz namespace: hee2hee to chain KUBE-POD-FW-FNJX3CJHIJ65OB5T */
+KUBE-POD-FW-FNJX3CJHIJ65OB5T  all  --  10.42.0.26           0.0.0.0/0            /* rule to jump traffic from POD name:postgres-65fdbf9494-xpwrz namespace: hee2hee to chain KUBE-POD-FW-FNJX3CJHIJ65OB5T */
+KUBE-POD-FW-LCJCCGT73M22L5YO  all  --  0.0.0.0/0            10.42.0.27           /* rule to jump traffic destined to POD name:ingress-nginx-controller-86c5998465-ngk58 namespace: ingress-nginx to chain KUBE-POD-FW-LCJCCGT73M22L5YO */
+KUBE-POD-FW-LCJCCGT73M22L5YO  all  --  10.42.0.27           0.0.0.0/0            /* rule to jump traffic from POD name:ingress-nginx-controller-86c5998465-ngk58 namespace: ingress-nginx to chain KUBE-POD-FW-LCJCCGT73M22L5YO */
+KUBE-POD-FW-6CYQ7KZTD2JMVR3A  all  --  0.0.0.0/0            10.42.0.25           /* rule to jump traffic destined to POD name:traefik-c5c8bf4ff-4q7ck namespace: kube-system to chain KUBE-POD-FW-6CYQ7KZTD2JMVR3A */
+KUBE-POD-FW-6CYQ7KZTD2JMVR3A  all  --  10.42.0.25           0.0.0.0/0            /* rule to jump traffic from POD name:traefik-c5c8bf4ff-4q7ck namespace: kube-system to chain KUBE-POD-FW-6CYQ7KZTD2JMVR3A */
+KUBE-POD-FW-H5Z35BOCBDXUYH7F  all  --  0.0.0.0/0            10.42.0.22           /* rule to jump traffic destined to POD name:local-path-provisioner-8686667995-9b4gp namespace: kube-system to chain KUBE-POD-FW-H5Z35BOCBDXUYH7F */
+KUBE-POD-FW-H5Z35BOCBDXUYH7F  all  --  10.42.0.22           0.0.0.0/0            /* rule to jump traffic from POD name:local-path-provisioner-8686667995-9b4gp namespace: kube-system to chain KUBE-POD-FW-H5Z35BOCBDXUYH7F */
+KUBE-POD-FW-C5TKNMZN7WK5JHP3  all  --  0.0.0.0/0            10.42.0.21           /* rule to jump traffic destined to POD name:svclb-traefik-0c98f5da-vz97j namespace: kube-system to chain KUBE-POD-FW-C5TKNMZN7WK5JHP3 */
+KUBE-POD-FW-C5TKNMZN7WK5JHP3  all  --  10.42.0.21           0.0.0.0/0            /* rule to jump traffic from POD name:svclb-traefik-0c98f5da-vz97j namespace: kube-system to chain KUBE-POD-FW-C5TKNMZN7WK5JHP3 */
+KUBE-POD-FW-VNPPWYYNFX4NYFZ5  all  --  0.0.0.0/0            10.42.0.24           /* rule to jump traffic destined to POD name:metrics-server-c8774f4f4-mx6hw namespace: kube-system to chain KUBE-POD-FW-VNPPWYYNFX4NYFZ5 */
+KUBE-POD-FW-VNPPWYYNFX4NYFZ5  all  --  10.42.0.24           0.0.0.0/0            /* rule to jump traffic from POD name:metrics-server-c8774f4f4-mx6hw namespace: kube-system to chain KUBE-POD-FW-VNPPWYYNFX4NYFZ5 */
+KUBE-POD-FW-IZ4FQBGQXKFPKRYO  all  --  0.0.0.0/0            10.42.0.28           /* rule to jump traffic destined to POD name:svclb-postgresql-service-6e0c1479-752p9 namespace: kube-system to chain KUBE-POD-FW-IZ4FQBGQXKFPKRYO */
+KUBE-POD-FW-IZ4FQBGQXKFPKRYO  all  --  10.42.0.28           0.0.0.0/0            /* rule to jump traffic from POD name:svclb-postgresql-service-6e0c1479-752p9 namespace: kube-system to chain KUBE-POD-FW-IZ4FQBGQXKFPKRYO */
+KUBE-POD-FW-YDXJKBHGHTFWKQ3V  all  --  0.0.0.0/0            10.42.0.31           /* rule to jump traffic destined to POD name:svclb-mysql-svc-f0e50de1-knhtz namespace: kube-system to chain KUBE-POD-FW-YDXJKBHGHTFWKQ3V */
+KUBE-POD-FW-YDXJKBHGHTFWKQ3V  all  --  10.42.0.31           0.0.0.0/0            /* rule to jump traffic from POD name:svclb-mysql-svc-f0e50de1-knhtz namespace: kube-system to chain KUBE-POD-FW-YDXJKBHGHTFWKQ3V */
+
+Chain KUBE-SERVICES (8 references)
+target     prot opt source               destination         

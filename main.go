@@ -144,9 +144,9 @@ func main() {
 
 	r := gin.Default()
 
-	indexTmpl := template.Must(template.New("index").Funcs(template.FuncMap{
-		"queryescape": url.QueryEscape,
-	}).Parse(indexHTML))
+	// html/template 이 href URL 컨텍스트에서 쿼리 파라미터를 자동으로 이스케이프하므로
+	// 수동 인코딩을 추가하면 이중 인코딩이 발생한다. 자동 이스케이프에 맡긴다.
+	indexTmpl := template.Must(template.New("index").Parse(indexHTML))
 	r.SetHTMLTemplate(indexTmpl)
 
 	// 메인 페이지: 그룹별 HTML 목록.
@@ -419,7 +419,7 @@ const indexHTML = `<!DOCTYPE html>
       {{range $file := $group.Files}}
       <li>
         <div class="item-row">
-          <a class="item" href="/view?group={{$group.Name | queryescape}}&amp;name={{$file | queryescape}}" target="_blank" rel="noopener">
+          <a class="item" href="/view?group={{$group.Name}}&amp;name={{$file}}" target="_blank" rel="noopener">
             <span>{{$file}}</span>
             <span class="badge">새 창으로 열기 ↗</span>
           </a>
